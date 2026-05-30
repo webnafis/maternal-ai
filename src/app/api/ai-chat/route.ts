@@ -85,3 +85,38 @@ export async function DELETE() {
   await clearChatHistory(session.user.id);
   return NextResponse.json({ success: true });
 }
+
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const formData = await req.formData();
+    const audioFile = formData.get("file") as File;
+
+    if (!audioFile) {
+      return NextResponse.json(
+        { error: "No audio file provided" },
+        { status: 400 }
+      );
+    }
+
+    // Transcribe the audio file using Groq's high-speed Whisper instance
+    const transcription = await groq.audio.transcriptions.create({
+      file: audioFile,
+      model: "whisper-large-v3",
+      response_format: "json",
+      temperature: 0.0,
+    });
+
+    return NextResponse.json({ text: transcription.text });
+  } catch (error) {
+    console.error("Transcription error:", error);
+    return NextResponse.json(
+      { error: "Failed to transcribe audio" },
+      { status: 500 }
+    );
+  }
+}

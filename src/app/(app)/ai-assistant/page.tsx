@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import AudioRecorder from "@/components/AudioRecorder";
 
 interface Message {
   role: "user" | "assistant";
@@ -322,6 +323,17 @@ export default function AIAssistantPage() {
             borderTop: "none",
           }}
         >
+          {/* NEW: Free Audio Input System */}
+          <AudioRecorder
+            disabled={sending}
+            onTranscriptionComplete={(transcribedText) => {
+              // Option A: Put text into field so user can check before sending
+              setInput(transcribedText);
+
+              // Option B: To instantly hit submit instead, uncomment line below:
+              // sendMessage(transcribedText);
+            }}
+          />
           <input
             className="JotnoAI-input"
             style={{ flex: 1, borderRadius: 12, fontSize: 14 }}
