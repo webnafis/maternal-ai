@@ -84,7 +84,7 @@ export default function NutritionPage() {
             Tailored dietary recommendations for your health in **Week {week}**
           </p>
         </div>
-        <span className="bloom-badge badge-gold">
+        <span className="JotnoAI-badge badge-gold">
           {trimester} Trimester Diet Plan
         </span>
       </div>
@@ -100,7 +100,7 @@ export default function NutritionPage() {
       >
         {/* Left Side: Nutrient Bar Graph Indicators */}
         <div
-          className="bloom-card"
+          className="JotnoAI-card"
           style={{
             display: "flex",
             flexDirection: "column",
@@ -178,7 +178,7 @@ export default function NutritionPage() {
         </div>
 
         {/* Right Side: Micro Supplements Recommendations Card */}
-        <div className="bloom-card">
+        <div className="JotnoAI-card">
           <h3
             style={{
               fontFamily: "'Playfair Display', serif",
@@ -232,7 +232,7 @@ export default function NutritionPage() {
         }}
       >
         {/* Safe Foods Checklist */}
-        <div className="bloom-card">
+        <div className="JotnoAI-card">
           <h3
             style={{
               fontFamily: "'Playfair Display', serif",
@@ -275,7 +275,7 @@ export default function NutritionPage() {
         </div>
 
         {/* Foods to Avoid Checklist */}
-        <div className="bloom-card">
+        <div className="JotnoAI-card">
           <h3
             style={{
               fontFamily: "'Playfair Display', serif",

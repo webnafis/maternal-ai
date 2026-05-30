@@ -45,7 +45,7 @@ export default function TrackerPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, marginBottom: 20 }}>
         {/* Week circle card */}
-        <div className="bloom-card" style={{ textAlign: 'center' }}>
+        <div className="JotnoAI-card" style={{ textAlign: 'center' }}>
           <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, marginBottom: 20, color: 'var(--text-dark)' }}>Current Week</h3>
 
           {/* Conic gradient circle */}
@@ -71,7 +71,7 @@ export default function TrackerPage() {
             <button className="btn-primary" onClick={() => changeWeek(1)} disabled={week >= 40 || saving}>Next →</button>
           </div>
 
-          <span className="bloom-badge badge-rose">{trimester} Trimester</span>
+          <span className="JotnoAI-badge badge-rose">{trimester} Trimester</span>
 
           <div style={{ marginTop: 16, padding: '12px', background: 'var(--cream)', borderRadius: 12 }}>
             <div style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 6 }}>Progress</div>
@@ -83,7 +83,7 @@ export default function TrackerPage() {
         </div>
 
         {/* Baby development */}
-        <div className="bloom-card">
+        <div className="JotnoAI-card">
           <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, marginBottom: 16, color: 'var(--text-dark)' }}>
             Baby Development 👶
           </h3>
@@ -110,7 +110,7 @@ export default function TrackerPage() {
       </div>
 
       {/* Milestone timeline */}
-      <div className="bloom-card">
+      <div className="JotnoAI-card">
         <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, marginBottom: 16, color: 'var(--text-dark)' }}>
           Milestone Timeline
         </h3>

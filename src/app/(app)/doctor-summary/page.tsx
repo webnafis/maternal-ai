@@ -113,7 +113,7 @@ export default function DoctorSummaryPage() {
       {/* Main Print Area Profile Card */}
       {!loading && !error && summary && (
         <div
-          className="bloom-card"
+          className="JotnoAI-card"
           id="printable-doctor-report"
           style={{ position: "relative" }}
         >
@@ -127,10 +127,10 @@ export default function DoctorSummaryPage() {
             }}
           >
             <span
-              className="bloom-badge badge-rose"
+              className="JotnoAI-badge badge-rose"
               style={{ fontSize: 14, padding: "6px 14px" }}
             >
-              🌸 Bloom Report
+              🌸 JotnoAI Report
             </span>
             <div
               style={{ fontSize: 11, color: "var(--text-light)", marginTop: 4 }}
@@ -212,7 +212,7 @@ export default function DoctorSummaryPage() {
               className="summary-label"
               style={{ color: "var(--rose)", marginBottom: 6, fontWeight: 700 }}
             >
-              ✨ Bloom AI Personalized Consultation Insights
+              ✨ JotnoAI AI Personalized Consultation Insights
             </div>
             <p
               style={{
@@ -272,7 +272,7 @@ export default function DoctorSummaryPage() {
           .btn-outline {
             display: none !important;
           }
-          .bloom-card {
+          .JotnoAI-card {
             box-shadow: none !important;
             border: none !important;
             padding: 0 !important;

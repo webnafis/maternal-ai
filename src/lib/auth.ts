@@ -7,7 +7,7 @@ import { format, addWeeks } from "date-fns";
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "Bloom",
+      name: "JotnoAI",
       credentials: {
         name: { label: "Name", type: "text" },
         pregnancyWeek: { label: "Pregnancy Week", type: "number" },

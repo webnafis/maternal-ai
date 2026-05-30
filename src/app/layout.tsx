@@ -3,7 +3,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "Bloom — Maternal Health Companion",
+  title: "JotnoAI — Maternal Health Companion",
   description: "Your caring maternal health AI companion",
   manifest: "/manifest.json",
   themeColor: "#E8756A",

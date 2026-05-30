@@ -99,7 +99,7 @@ export default function VaccinationPage() {
         }}
       >
         <div
-          className="bloom-card"
+          className="JotnoAI-card"
           style={{
             display: "flex",
             alignItems: "center",
@@ -137,7 +137,7 @@ export default function VaccinationPage() {
         </div>
 
         <div
-          className="bloom-card"
+          className="JotnoAI-card"
           style={{
             display: "flex",
             alignItems: "center",
@@ -271,7 +271,7 @@ export default function VaccinationPage() {
                         {v.name}
                       </span>
                       <span
-                        className={`bloom-badge ${
+                        className={`JotnoAI-badge ${
                           isDone
                             ? "badge-sage"
                             : isDue
@@ -320,7 +320,7 @@ export default function VaccinationPage() {
 
         {/* Right Side: Clinical Timeline Guide Card Block */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div className="bloom-card" style={{ padding: "24px" }}>
+          <div className="JotnoAI-card" style={{ padding: "24px" }}>
             <h3
               style={{
                 fontFamily: "'Playfair Display', serif",

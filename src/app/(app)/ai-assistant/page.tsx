@@ -64,7 +64,7 @@ export default function AIAssistantPage() {
           setMessages([
             {
               role: "assistant",
-              content: `Assalamu Alaikum, ${name}! 🌸 I'm your Bloom AI health assistant. I'm here to support your pregnancy journey at Week ${week}. Ask me anything about nutrition, symptoms, exercises, or what to expect. How can I help you today?`,
+              content: `Assalamu Alaikum, ${name}! 🌸 I'm your JotnoAI AI health assistant. I'm here to support your pregnancy journey at Week ${week}. Ask me anything about nutrition, symptoms, exercises, or what to expect. How can I help you today?`,
               created_at: new Date().toISOString(),
             },
           ]);
@@ -178,7 +178,7 @@ export default function AIAssistantPage() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <span className="bloom-badge badge-sage">🤖 AI Powered</span>
+          <span className="JotnoAI-badge badge-sage">🤖 AI Powered</span>
           <button
             className="btn-outline"
             style={{ fontSize: 12, padding: "6px 12px" }}
@@ -323,7 +323,7 @@ export default function AIAssistantPage() {
           }}
         >
           <input
-            className="bloom-input"
+            className="JotnoAI-input"
             style={{ flex: 1, borderRadius: 12, fontSize: 14 }}
             placeholder="Ask anything about pregnancy, symptoms, nutrition…"
             value={input}

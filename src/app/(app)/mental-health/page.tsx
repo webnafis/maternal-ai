@@ -203,7 +203,7 @@ export default function MentalHealthPage() {
       </div>
 
       {/* ── Mood Logger ── */}
-      <div className="bloom-card" style={{ marginBottom: 20 }}>
+      <div className="JotnoAI-card" style={{ marginBottom: 20 }}>
         <h3
           style={{
             fontFamily: "'Playfair Display', serif",
@@ -311,7 +311,7 @@ export default function MentalHealthPage() {
         }}
       >
         {/* History */}
-        <div className="bloom-card">
+        <div className="JotnoAI-card">
           <h3
             style={{
               fontFamily: "'Playfair Display', serif",
@@ -372,7 +372,7 @@ export default function MentalHealthPage() {
         </div>
 
         {/* Wellness Tips */}
-        <div className="bloom-card">
+        <div className="JotnoAI-card">
           <h3
             style={{
               fontFamily: "'Playfair Display', serif",
@@ -402,7 +402,7 @@ export default function MentalHealthPage() {
 
       {/* ── PHQ-5 Screening ── */}
       <div
-        className="bloom-card"
+        className="JotnoAI-card"
         style={{
           background:
             "linear-gradient(135deg, var(--rose-pale) 0%, var(--sage-pale) 100%)",

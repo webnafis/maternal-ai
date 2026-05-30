@@ -40,7 +40,7 @@ export default function Sidebar({ userName, pregnancyWeek }: SidebarProps) {
       {/* Logo */}
       <div style={{ padding: '0 24px 28px', borderBottom: '1px solid rgba(200,169,110,0.2)' }}>
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: 'var(--rose)', letterSpacing: '-0.5px' }}>
-          🌸 Bloom
+          🌸 JotnoAI
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: 2 }}>
           Maternal Health AI
