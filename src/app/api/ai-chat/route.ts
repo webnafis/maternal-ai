@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getChatHistory, saveChatMessage, clearChatHistory } from "@/lib/db";
-import Anthropic from "@anthropic-ai/sdk";
+import Groq from "groq-sdk";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Initialize the free Groq client
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const SYSTEM_PROMPT = `You are JotnoAI, a warm and knowledgeable AI maternal health companion. You help pregnant women with health information, emotional support, and guidance throughout their pregnancy journey.
 
@@ -22,7 +23,6 @@ export async function GET() {
   if (!session?.user?.id)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // 🔔 UPDATE: Added 'await' because database call is asynchronous now
   const history = await getChatHistory(session.user.id, 50);
   return NextResponse.json({ history });
 }
@@ -36,36 +36,40 @@ export async function POST(req: NextRequest) {
   if (!message?.trim())
     return NextResponse.json({ error: "Empty message" }, { status: 400 });
 
-  // 🔔 UPDATE: Added 'await' because database call is asynchronous now
   const history = await getChatHistory(session.user.id, 20);
 
-  const messages: Anthropic.MessageParam[] = [
+  // Dynamic system instructions block based on user data
+  const finalSystemPrompt =
+    SYSTEM_PROMPT +
+    (week ? `\n\nThe user is currently at week ${week} of pregnancy.` : "");
+
+  // Groq utilizes the standard OpenAI array format (System goes inside messages)
+  const messages = [
+    { role: "system", content: finalSystemPrompt },
     ...history.map((h) => ({
-      role: h.role as "user" | "assistant",
+      role: h.role === "assistant" ? "assistant" : "user",
       content: h.content,
     })),
     { role: "user", content: message },
   ];
 
   try {
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022", // Updated to a valid Sonnet identifier
+    // Generate completion instantly via Groq Llama 3.3
+    const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: messages as any,
       max_tokens: 500,
-      system:
-        SYSTEM_PROMPT +
-        (week ? `\n\nThe user is currently at week ${week} of pregnancy.` : ""),
-      messages,
+      temperature: 0.7,
     });
 
-    const reply = (response.content[0] as any).text;
+    const reply = response.choices[0]?.message?.content || "";
 
-    // 🔔 UPDATE: Added 'await' to ensure operations finish sequentially
     await saveChatMessage(session.user.id, "user", message);
     await saveChatMessage(session.user.id, "assistant", reply);
 
     return NextResponse.json({ reply });
   } catch (error) {
-    console.error("AI chat error:", error);
+    console.error("Groq AI chat error:", error);
     return NextResponse.json({
       reply:
         "I'm having trouble connecting right now. Please try again in a moment. If you have urgent concerns, please contact your healthcare provider. 💙",
@@ -78,7 +82,6 @@ export async function DELETE() {
   if (!session?.user?.id)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // 🔔 UPDATE: Added 'await' because database call is asynchronous now
   await clearChatHistory(session.user.id);
   return NextResponse.json({ success: true });
 }
