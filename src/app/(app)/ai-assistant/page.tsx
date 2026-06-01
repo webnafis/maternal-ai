@@ -149,7 +149,7 @@ export default function AIAssistantPage() {
         margin: "0 auto",
         display: "flex",
         flexDirection: "column",
-        height: "calc(100vh - 90px)",
+        minHeight: "100vh",
       }}
     >
       {/* ── Header ── */}
@@ -213,6 +213,7 @@ export default function AIAssistantPage() {
           display: "flex",
           flexDirection: "column",
           minHeight: 0,
+          maxHeight: "100vh",
         }}
       >
         {/* Messages */}

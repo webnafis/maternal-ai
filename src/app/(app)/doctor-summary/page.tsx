@@ -2,17 +2,40 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 
+interface MoodEntry {
+  date: string;
+  emoji: string;
+  label: string;
+}
+
+interface SymptomEntry {
+  date: string;
+  symptoms: string[];
+  severity: "safe" | "warn" | "danger";
+}
+
 interface SummaryData {
   patient: string;
   week: string;
   progress: string;
   dueDate: string;
   vaccinations: string;
-  recentMood: string;
-  symptomsReported: string;
+  moodLog: MoodEntry[];
+  symptomLog: SymptomEntry[];
   aiRecommendations: string;
   nextAppointment: string;
   generatedAt: string;
+}
+
+function formatDate(dateStr: string) {
+  try {
+    return new Date(dateStr).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+    });
+  } catch {
+    return dateStr;
+  }
 }
 
 export default function DoctorSummaryPage() {
@@ -46,7 +69,7 @@ export default function DoctorSummaryPage() {
 
   return (
     <div
-      style={{ padding: "24px", maxWidth: 800, margin: "0 auto" }}
+      style={{ padding: "24px", margin: "0 auto" }}
       className="animate-fade-in"
     >
       {/* Header and Controls */}
@@ -99,7 +122,7 @@ export default function DoctorSummaryPage() {
           <div className="typing-dot" style={{ marginRight: 4 }}></div>
           <div className="typing-dot"></div>
           <p style={{ fontSize: 14, color: "var(--text-mid)", marginTop: 12 }}>
-            Compiling database state & drafting clinical recommendations...
+            Compiling database state &amp; drafting clinical recommendations...
           </p>
         </div>
       )}
@@ -110,7 +133,6 @@ export default function DoctorSummaryPage() {
         </div>
       )}
 
-      {/* Main Print Area Profile Card */}
       {!loading && !error && summary && (
         <div
           className="JotnoAI-card"
@@ -150,6 +172,7 @@ export default function DoctorSummaryPage() {
             Prenatal Health Record
           </h3>
 
+          {/* ── Static profile fields ── */}
           <div
             style={{
               display: "grid",
@@ -159,28 +182,11 @@ export default function DoctorSummaryPage() {
             }}
           >
             {[
-              {
-                label: "Patient Identity Profile Name",
-                value: summary.patient,
-              },
-              { label: "Gestational Timeline Status", value: summary.week },
-              { label: "Completion Progress Metrics", value: summary.progress },
-              {
-                label: "Target Estimated Due Date (EDD)",
-                value: summary.dueDate,
-              },
-              {
-                label: "Immunization Record Profile Ledger",
-                value: summary.vaccinations,
-              },
-              {
-                label: "Aggregated Psychological Mood Metric (Past 7 Days)",
-                value: summary.recentMood,
-              },
-              {
-                label: "Active Somatic Symptom Tracking Log",
-                value: summary.symptomsReported,
-              },
+              { label: "Patient Name", value: summary.patient },
+              { label: "Gestational Timeline", value: summary.week },
+              { label: "Pregnancy Progress", value: summary.progress },
+              { label: "Estimated Due Date (EDD)", value: summary.dueDate },
+              { label: "Immunization Record", value: summary.vaccinations },
             ].map((field, idx) => (
               <div className="summary-field" key={idx}>
                 <div className="summary-label">{field.label}</div>
@@ -198,7 +204,55 @@ export default function DoctorSummaryPage() {
             ))}
           </div>
 
-          {/* AI Clinical Clinical Recommendations Field */}
+          {/* ── 7-Day Mood Log ── */}
+          <div className="summary-field" style={{ marginTop: 12 }}>
+            <div className="summary-label">Mood Log — Last 7 Days</div>
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                color: "var(--text-dark)",
+                marginTop: 2,
+              }}
+            >
+              {summary.moodLog.length === 0
+                ? "No mood entries recorded in the past 7 days."
+                : summary.moodLog
+                    .map((e) => `${e.emoji} ${e.label} (${formatDate(e.date)})`)
+                    .join("  ·  ")}
+            </div>
+          </div>
+
+          {/* ── Symptom Log ── */}
+          <div className="summary-field" style={{ marginTop: 12 }}>
+            <div className="summary-label">Symptom Log — Last 7 Days</div>
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                color: "var(--text-dark)",
+                marginTop: 2,
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              {summary.symptomLog.length === 0
+                ? "No symptoms reported in the past 7 days."
+                : summary.symptomLog.map((entry, idx) => (
+                    <span key={idx}>
+                      <span
+                        style={{ color: "var(--text-mid)", fontWeight: 400 }}
+                      >
+                        {formatDate(entry.date)}:
+                      </span>{" "}
+                      {entry.symptoms.join(", ")}
+                    </span>
+                  ))}
+            </div>
+          </div>
+
+          {/* ── AI Clinical Recommendations ── */}
           <div
             style={{
               marginTop: 20,
@@ -210,30 +264,36 @@ export default function DoctorSummaryPage() {
           >
             <div
               className="summary-label"
-              style={{ color: "var(--rose)", marginBottom: 6, fontWeight: 700 }}
+              style={{ color: "var(--rose)", marginBottom: 8, fontWeight: 700 }}
             >
-              ✨ JotnoAI AI Personalized Consultation Insights
+              ✨ AI Personalized Consultation Insights
             </div>
-            <p
+            <div
               style={{
                 margin: 0,
                 fontSize: 14,
                 color: "var(--text-dark)",
-                lineHeight: 1.6,
-                whiteSpace: "pre-line",
+                lineHeight: 1.7,
               }}
             >
-              {summary.aiRecommendations}
-            </p>
+              {summary.aiRecommendations
+                .split("\n")
+                .filter((line) => line.trim())
+                .map((line, idx) => (
+                  <p key={idx} style={{ margin: "0 0 6px 0" }}>
+                    {line}
+                  </p>
+                ))}
+            </div>
           </div>
 
-          {/* Next Steps schedule helper advice */}
+          {/* ── Next Appointment ── */}
           <div style={{ marginTop: 12 }} className="alert-box alert-safe">
-            <strong>📅 Routine Clinic Protocol Guideline:</strong>{" "}
+            <strong>📅 Routine Clinic Protocol:</strong>{" "}
             {summary.nextAppointment}.
           </div>
 
-          {/* International and Local Policy Disclaimer Notice */}
+          {/* ── Disclaimer ── */}
           <div
             style={{
               marginTop: 24,
@@ -253,7 +313,7 @@ export default function DoctorSummaryPage() {
         </div>
       )}
 
-      {/* Embedded CSS style print overrides */}
+      {/* Print overrides */}
       <style jsx global>{`
         @media print {
           body {

@@ -56,6 +56,20 @@ export default async function AppLayout({
           main { margin-left: 0 !important; }
           .mobile-nav { display: flex !important; }
         }
+
+        /* ── Print: hide all app chrome, reset layout ── */
+        @media print {
+          .desktop-only-sidebar,
+          .mobile-nav,
+          nav,
+          header,
+          footer { display: none !important; }
+ 
+          main {
+            margin-left: 0 !important;
+            padding: 0 !important;
+          }
+        }
       `}</style>
     </div>
   );
