@@ -45,7 +45,7 @@ type AlertType = "safe" | "warn" | "danger";
 
 /* ── Component ── */
 export default function MentalHealthPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const week = (session?.user as any)?.pregnancyWeek ?? 1;
 
   const [selectedMood, setSelectedMood] = useState<(typeof MOODS)[0] | null>(
@@ -133,7 +133,7 @@ export default function MentalHealthPage() {
     setMoodFeedback(null);
   }
 
-  /* ── PHQ assessment (also saves score to API) ── */
+  /* ── PHQ assessment ── */
   async function assessPHQ() {
     if (phqAnswers.some((a) => a === -1)) {
       setPhqResult({
@@ -163,7 +163,6 @@ export default function MentalHealthPage() {
     }
     setPhqResult(result);
 
-    // Only send PHQ score — no mood fields at all
     try {
       await fetch("/api/mood/phq", {
         method: "POST",
@@ -173,6 +172,340 @@ export default function MentalHealthPage() {
     } catch {
       /* non-blocking */
     }
+  }
+
+  /* ─────────────────────────────────────────
+     FULL-PAGE PULSE SKELETON LOADER
+  ───────────────────────────────────────── */
+  if (status === "loading") {
+    return (
+      <div style={{ padding: "24px", maxWidth: 900, margin: "0 auto" }}>
+        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+
+        {/* ── Header skeleton ── */}
+        <div
+          style={{
+            marginBottom: 24,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              height: 32,
+              width: 210,
+              borderRadius: 8,
+              background: "rgba(200,169,110,0.22)",
+              animation: "pulse 1.5s ease-in-out infinite",
+            }}
+          />
+          <div
+            style={{
+              height: 14,
+              width: 200,
+              borderRadius: 6,
+              background: "rgba(200,169,110,0.12)",
+              animation: "pulse 1.5s ease-in-out infinite",
+            }}
+          />
+        </div>
+
+        {/* ── Mood Logger card skeleton ── */}
+        <div className="JotnoAI-card" style={{ marginBottom: 20 }}>
+          {/* Title */}
+          <div
+            style={{
+              height: 22,
+              width: 240,
+              borderRadius: 6,
+              background: "rgba(200,169,110,0.22)",
+              animation: "pulse 1.5s ease-in-out infinite",
+              marginBottom: 22,
+            }}
+          />
+
+          {/* 5 mood buttons */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-around",
+              flexWrap: "wrap",
+              gap: 8,
+              marginBottom: 20,
+            }}
+          >
+            {MOODS.map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "12px 18px",
+                }}
+              >
+                {/* Emoji circle */}
+                <div
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: "50%",
+                    background: "rgba(200,169,110,0.14)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                />
+                {/* Label */}
+                <div
+                  style={{
+                    height: 10,
+                    width: 36,
+                    borderRadius: 5,
+                    background: "rgba(200,169,110,0.1)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Journal textarea */}
+          <div
+            style={{
+              width: "100%",
+              height: 110,
+              borderRadius: 12,
+              background: "rgba(200,169,110,0.07)",
+              border: "1px solid rgba(200,169,110,0.12)",
+              animation: "pulse 1.5s ease-in-out infinite",
+              boxSizing: "border-box",
+            }}
+          />
+
+          {/* Buttons row */}
+          <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
+            <div
+              style={{
+                height: 38,
+                width: 190,
+                borderRadius: 10,
+                background: "rgba(232,117,106,0.2)",
+                animation: "pulse 1.5s ease-in-out infinite",
+              }}
+            />
+            <div
+              style={{
+                height: 38,
+                width: 70,
+                borderRadius: 10,
+                background: "rgba(200,169,110,0.12)",
+                animation: "pulse 1.5s ease-in-out infinite",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* ── Mood History + Wellness Tips skeleton ── */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: 20,
+            marginBottom: 20,
+          }}
+        >
+          {/* Mood History skeleton */}
+          <div className="JotnoAI-card">
+            <div
+              style={{
+                height: 22,
+                width: 148,
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.22)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 16,
+              }}
+            />
+            {/* Chip pills */}
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                flexWrap: "wrap",
+                marginBottom: 14,
+              }}
+            >
+              {[88, 76, 92, 80, 72, 84, 78, 90].map((w, i) => (
+                <div
+                  key={i}
+                  style={{
+                    height: 28,
+                    width: w,
+                    borderRadius: 20,
+                    background: "rgba(200,169,110,0.1)",
+                    border: "1px solid rgba(200,169,110,0.12)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                />
+              ))}
+            </div>
+            {/* AI insight box */}
+            <div
+              style={{
+                height: 52,
+                borderRadius: 10,
+                background: "rgba(100,160,110,0.08)",
+                border: "1px solid rgba(100,160,110,0.14)",
+                animation: "pulse 1.5s ease-in-out infinite",
+              }}
+            />
+          </div>
+
+          {/* Wellness Tips skeleton */}
+          <div className="JotnoAI-card">
+            <div
+              style={{
+                height: 22,
+                width: 155,
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.22)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 16,
+              }}
+            />
+            <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+              {[88, 76, 82, 72, 94, 68, 80].map((pct, i) => (
+                <div
+                  key={i}
+                  style={{
+                    height: 13,
+                    width: `${pct}%`,
+                    borderRadius: 6,
+                    background: "rgba(200,169,110,0.11)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── PHQ-5 Screening skeleton ── */}
+        <div
+          className="JotnoAI-card"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(232,117,106,0.06) 0%, rgba(100,160,110,0.06) 100%)",
+          }}
+        >
+          {/* Title */}
+          <div
+            style={{
+              height: 22,
+              width: 290,
+              borderRadius: 6,
+              background: "rgba(200,169,110,0.2)",
+              animation: "pulse 1.5s ease-in-out infinite",
+              marginBottom: 10,
+            }}
+          />
+          {/* Subtitle lines */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 7,
+              marginBottom: 20,
+            }}
+          >
+            <div
+              style={{
+                height: 13,
+                width: "92%",
+                borderRadius: 5,
+                background: "rgba(200,169,110,0.1)",
+                animation: "pulse 1.5s ease-in-out infinite",
+              }}
+            />
+            <div
+              style={{
+                height: 13,
+                width: "70%",
+                borderRadius: 5,
+                background: "rgba(200,169,110,0.1)",
+                animation: "pulse 1.5s ease-in-out infinite",
+              }}
+            />
+          </div>
+
+          {/* 5 PHQ question blocks */}
+          {PHQ_QUESTIONS.map((_, qi) => (
+            <div key={qi} style={{ marginBottom: 18 }}>
+              {/* Question text */}
+              <div
+                style={{
+                  height: 13,
+                  width: `${62 + ((qi * 8) % 28)}%`,
+                  borderRadius: 5,
+                  background: "rgba(200,169,110,0.18)",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                  marginBottom: 10,
+                }}
+              />
+              {/* 4 radio option pills */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                {PHQ_OPTIONS.map((opt, oi) => (
+                  <div
+                    key={oi}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    {/* Radio circle */}
+                    <div
+                      style={{
+                        width: 15,
+                        height: 15,
+                        borderRadius: "50%",
+                        background: "rgba(200,169,110,0.18)",
+                        border: "2px solid rgba(200,169,110,0.2)",
+                        animation: "pulse 1.5s ease-in-out infinite",
+                        flexShrink: 0,
+                      }}
+                    />
+                    {/* Option label */}
+                    <div
+                      style={{
+                        height: 11,
+                        width: opt.length * 6.5,
+                        borderRadius: 4,
+                        background: "rgba(200,169,110,0.12)",
+                        animation: "pulse 1.5s ease-in-out infinite",
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* Submit button */}
+          <div
+            style={{
+              height: 38,
+              width: 180,
+              borderRadius: 10,
+              background: "rgba(232,117,106,0.2)",
+              animation: "pulse 1.5s ease-in-out infinite",
+              marginTop: 6,
+            }}
+          />
+        </div>
+      </div>
+    );
   }
 
   /* ── Render ── */
@@ -307,7 +640,6 @@ export default function MentalHealthPage() {
         }}
       >
         {/* History */}
-        {/* History */}
         <div className="JotnoAI-card">
           <h3
             style={{
@@ -319,8 +651,43 @@ export default function MentalHealthPage() {
           >
             📅 Mood History
           </h3>
+
+          {/* ── INLINE HISTORY SKELETON ── */}
           {historyLoading ? (
-            <p style={{ fontSize: 13, color: "var(--text-light)" }}>Loading…</p>
+            <>
+              <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "wrap",
+                  marginBottom: 14,
+                }}
+              >
+                {[88, 76, 92, 80, 72, 84, 78, 90].map((w, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      height: 28,
+                      width: w,
+                      borderRadius: 20,
+                      background: "rgba(200,169,110,0.1)",
+                      border: "1px solid rgba(200,169,110,0.12)",
+                      animation: "pulse 1.5s ease-in-out infinite",
+                    }}
+                  />
+                ))}
+              </div>
+              <div
+                style={{
+                  height: 50,
+                  borderRadius: 10,
+                  background: "rgba(100,160,110,0.07)",
+                  border: "1px solid rgba(100,160,110,0.12)",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                }}
+              />
+            </>
           ) : moodHistory.length === 0 ? (
             <p style={{ fontSize: 13, color: "var(--text-light)" }}>
               No entries yet. Start logging your mood!
@@ -364,18 +731,15 @@ export default function MentalHealthPage() {
                     </button>
                   ))}
               </div>
-              {
-                // ✅ Correct — index 0 is the most recent entry
-                moodHistory[0]?.ai_feedback && (
-                  <div
-                    className="alert-box alert-safe"
-                    style={{ display: "block", fontSize: 13 }}
-                  >
-                    💙 <strong>Latest AI insight:</strong>{" "}
-                    {moodHistory[0].ai_feedback}
-                  </div>
-                )
-              }
+              {moodHistory[0]?.ai_feedback && (
+                <div
+                  className="alert-box alert-safe"
+                  style={{ display: "block", fontSize: 13 }}
+                >
+                  💙 <strong>Latest AI insight:</strong>{" "}
+                  {moodHistory[0].ai_feedback}
+                </div>
+              )}
             </>
           )}
         </div>

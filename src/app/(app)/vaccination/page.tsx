@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface Vaccine {
   id: string;
@@ -98,10 +97,29 @@ export default function VaccinationPage() {
   if (status === "loading" || loading) {
     return (
       <div style={{ padding: "24px", maxWidth: 1100, margin: "0 auto" }}>
+        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+
         {/* Header */}
         <div style={{ marginBottom: 28 }}>
-          <Skeleton className="h-8 w-72 mb-2" />
-          <Skeleton className="h-4 w-96" />
+          <div
+            style={{
+              height: 32,
+              width: 280,
+              borderRadius: 8,
+              background: "rgba(200,169,110,0.22)",
+              animation: "pulse 1.5s ease-in-out infinite",
+              marginBottom: 10,
+            }}
+          />
+          <div
+            style={{
+              height: 14,
+              width: 380,
+              borderRadius: 6,
+              background: "rgba(200,169,110,0.12)",
+              animation: "pulse 1.5s ease-in-out infinite",
+            }}
+          />
         </div>
 
         {/* Overview cards */}
@@ -124,10 +142,36 @@ export default function VaccinationPage() {
                 padding: "20px",
               }}
             >
-              <Skeleton className="h-14 w-14 rounded-2xl" />
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 14,
+                  background: "rgba(200,169,110,0.15)",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                  flexShrink: 0,
+                }}
+              />
               <div>
-                <Skeleton className="h-6 w-16 mb-2" />
-                <Skeleton className="h-3 w-24" />
+                <div
+                  style={{
+                    height: 24,
+                    width: 60,
+                    borderRadius: 6,
+                    background: "rgba(200,169,110,0.2)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                    marginBottom: 8,
+                  }}
+                />
+                <div
+                  style={{
+                    height: 12,
+                    width: 90,
+                    borderRadius: 6,
+                    background: "rgba(200,169,110,0.1)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                />
               </div>
             </div>
           ))}
@@ -158,28 +202,115 @@ export default function VaccinationPage() {
                   border: "1px solid rgba(200,169,110,0.08)",
                 }}
               >
-                <Skeleton className="h-11 w-11 rounded-full flex-shrink-0" />
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: "50%",
+                    background: "rgba(200,169,110,0.15)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                    flexShrink: 0,
+                  }}
+                />
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-                    <Skeleton className="h-4 w-36" />
-                    <Skeleton className="h-4 w-16 rounded-full" />
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    <div
+                      style={{
+                        height: 14,
+                        width: 140,
+                        borderRadius: 6,
+                        background: "rgba(200,169,110,0.2)",
+                        animation: "pulse 1.5s ease-in-out infinite",
+                      }}
+                    />
+                    <div
+                      style={{
+                        height: 14,
+                        width: 60,
+                        borderRadius: 20,
+                        background: "rgba(200,169,110,0.12)",
+                        animation: "pulse 1.5s ease-in-out infinite",
+                      }}
+                    />
                   </div>
-                  <Skeleton className="h-3 w-48" />
+                  <div
+                    style={{
+                      height: 12,
+                      width: 180,
+                      borderRadius: 6,
+                      background: "rgba(200,169,110,0.1)",
+                      animation: "pulse 1.5s ease-in-out infinite",
+                    }}
+                  />
                 </div>
-                <Skeleton className="h-8 w-24 rounded-xl" />
+                <div
+                  style={{
+                    height: 32,
+                    width: 96,
+                    borderRadius: 10,
+                    background: "rgba(200,169,110,0.15)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                    flexShrink: 0,
+                  }}
+                />
               </div>
             ))}
           </div>
 
           {/* Right: timeline */}
           <div className="JotnoAI-card" style={{ padding: "24px" }}>
-            <Skeleton className="h-5 w-56 mb-4" />
-            <Skeleton className="h-4 w-full mb-1" />
-            <Skeleton className="h-4 w-full mb-1" />
-            <Skeleton className="h-4 w-3/4 mb-4" />
+            <div
+              style={{
+                height: 20,
+                width: 220,
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.22)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 16,
+              }}
+            />
+            <div
+              style={{
+                height: 13,
+                width: "100%",
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.1)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 6,
+              }}
+            />
+            <div
+              style={{
+                height: 13,
+                width: "100%",
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.1)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 6,
+              }}
+            />
+            <div
+              style={{
+                height: 13,
+                width: "70%",
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.1)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 18,
+              }}
+            />
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-14 w-full rounded-xl" />
+                <div
+                  key={i}
+                  style={{
+                    height: 56,
+                    borderRadius: 12,
+                    background: "rgba(200,169,110,0.08)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                    borderLeft: "4px solid rgba(200,169,110,0.2)",
+                  }}
+                />
               ))}
             </div>
           </div>
@@ -377,147 +508,133 @@ export default function VaccinationPage() {
       >
         {/* Left: Vaccine Tracking List */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {
-            // loading ? (
-            //   <div
-            //     style={{
-            //       padding: "40px 0",
-            //       textAlign: "center",
-            //       color: "var(--text-light)",
-            //       fontSize: 14,
-            //     }}
-            //   >
-            //     Loading vaccination records...
-            //   </div>
-            // ) :
-            vaccines.map((v) => {
-              const s = STATUS[v.status];
-              return (
+          {vaccines.map((v) => {
+            const s = STATUS[v.status];
+            return (
+              <div
+                className="vacc-item animate-fade-in"
+                key={v.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  padding: "16px 20px",
+                  background: "var(--warm-white)",
+                  borderRadius: "16px",
+                  boxShadow: "var(--shadow)",
+                  border: "1px solid rgba(200,169,110,0.08)",
+                  opacity: updatingId === v.id ? 0.6 : 1,
+                  transition: "transform 0.2s ease",
+                }}
+              >
+                {/* Status icon */}
                 <div
-                  className="vacc-item animate-fade-in"
-                  key={v.id}
                   style={{
+                    background: s.circleBg,
+                    color: s.circleColor,
+                    width: 44,
+                    height: 44,
+                    borderRadius: "50%",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 16,
-                    padding: "16px 20px",
-                    background: "var(--warm-white)",
-                    borderRadius: "16px",
-                    boxShadow: "var(--shadow)",
-                    border: "1px solid rgba(200,169,110,0.08)",
-                    opacity: updatingId === v.id ? 0.6 : 1,
-                    transition: "transform 0.2s ease",
+                    justifyContent: "center",
+                    fontSize: 18,
+                    flexShrink: 0,
                   }}
                 >
-                  {/* Status icon */}
+                  {s.icon}
+                </div>
+
+                {/* Name + badge + week */}
+                <div style={{ flex: 1 }}>
                   <div
                     style={{
-                      background: s.circleBg,
-                      color: s.circleColor,
-                      width: 44,
-                      height: 44,
-                      borderRadius: "50%",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 18,
-                      flexShrink: 0,
+                      gap: 8,
+                      flexWrap: "wrap",
                     }}
                   >
-                    {s.icon}
-                  </div>
-
-                  {/* Name + badge + week */}
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 15,
-                          fontWeight: 600,
-                          color: "var(--text-dark)",
-                        }}
-                      >
-                        {v.name}
-                      </span>
-                      <span
-                        className={`JotnoAI-badge ${s.badgeClass}`}
-                        style={{ fontSize: 10, textTransform: "capitalize" }}
-                      >
-                        {v.status}
-                      </span>
-                    </div>
-                    <p
-                      style={{
-                        margin: "4px 0 0 0",
-                        fontSize: 13,
-                        color: "var(--text-mid)",
-                      }}
-                    >
-                      📅 Target Window:{" "}
-                      <strong style={{ color: "var(--text-dark)" }}>
-                        {v.weekRange}
-                      </strong>
-                    </p>
-                  </div>
-
-                  {/* Action button — upcoming is locked */}
-                  {v.status === "upcoming" ? (
                     <span
                       style={{
-                        padding: "8px 14px",
-                        fontSize: 12,
-                        borderRadius: "10px",
-                        background: "#F0F0F0",
-                        color: "var(--text-light)",
-                        whiteSpace: "nowrap",
-                        userSelect: "none",
+                        fontSize: 15,
+                        fontWeight: 600,
+                        color: "var(--text-dark)",
                       }}
                     >
-                      Not Yet Due
+                      {v.name}
                     </span>
-                  ) : v.status === "due" ? (
-                    <button
-                      className="btn-primary"
-                      style={{
-                        padding: "8px 14px",
-                        fontSize: 12,
-                        borderRadius: "10px",
-                        cursor: updatingId ? "not-allowed" : "pointer",
-                        whiteSpace: "nowrap",
-                      }}
-                      onClick={() => markDone(v.id)}
-                      disabled={updatingId !== null}
+                    <span
+                      className={`JotnoAI-badge ${s.badgeClass}`}
+                      style={{ fontSize: 10, textTransform: "capitalize" }}
                     >
-                      Mark Done
-                    </button>
-                  ) : (
-                    <button
-                      className="btn-sage"
-                      style={{
-                        padding: "8px 14px",
-                        fontSize: 12,
-                        borderRadius: "10px",
-                        cursor: updatingId ? "not-allowed" : "pointer",
-                        whiteSpace: "nowrap",
-                      }}
-                      onClick={() => setConfirmUndoneId(v.id)}
-                      disabled={updatingId !== null}
-                    >
-                      Mark Undone
-                    </button>
-                  )}
+                      {v.status}
+                    </span>
+                  </div>
+                  <p
+                    style={{
+                      margin: "4px 0 0 0",
+                      fontSize: 13,
+                      color: "var(--text-mid)",
+                    }}
+                  >
+                    📅 Target Window:{" "}
+                    <strong style={{ color: "var(--text-dark)" }}>
+                      {v.weekRange}
+                    </strong>
+                  </p>
                 </div>
-              );
-            })
-          }
+
+                {/* Action button — upcoming is locked */}
+                {v.status === "upcoming" ? (
+                  <span
+                    style={{
+                      padding: "8px 14px",
+                      fontSize: 12,
+                      borderRadius: "10px",
+                      background: "#F0F0F0",
+                      color: "var(--text-light)",
+                      whiteSpace: "nowrap",
+                      userSelect: "none",
+                    }}
+                  >
+                    Not Yet Due
+                  </span>
+                ) : v.status === "due" ? (
+                  <button
+                    className="btn-primary"
+                    style={{
+                      padding: "8px 14px",
+                      fontSize: 12,
+                      borderRadius: "10px",
+                      cursor: updatingId ? "not-allowed" : "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                    onClick={() => markDone(v.id)}
+                    disabled={updatingId !== null}
+                  >
+                    Mark Done
+                  </button>
+                ) : (
+                  <button
+                    className="btn-sage"
+                    style={{
+                      padding: "8px 14px",
+                      fontSize: 12,
+                      borderRadius: "10px",
+                      cursor: updatingId ? "not-allowed" : "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                    onClick={() => setConfirmUndoneId(v.id)}
+                    disabled={updatingId !== null}
+                  >
+                    Mark Undone
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Right: Clinical Timeline — all vaccines with description + status color */}
@@ -545,71 +662,27 @@ export default function VaccinationPage() {
               antibodies directly across the placenta structure to support
               newborn shielding lines prior to birth.
             </p>
-            {
-              // loading ? (
-              //   <div style={{ fontSize: 13, color: "var(--text-light)" }}>
-              //     Loading timeline...
-              //   </div>
-              // ) :
-
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}
-              >
-                {vaccines.map((v) => {
-                  const s = STATUS[v.status];
-                  return (
-                    <div
-                      key={v.id}
-                      style={{
-                        padding: "12px 14px",
-                        background: s.timelineBg,
-                        borderRadius: 12,
-                        borderLeft: `4px solid ${s.timelineBorder}`,
-                        lineHeight: 1.5,
-                        fontSize: 13,
-                      }}
-                    >
-                      {/* <div
-                      // style={{
-                      //   padding: "12px",
-                      //   background: "var(--rose-pale)",
-                      //   borderRadius: 12,
-                      //   borderLeft: "4px solid var(--rose)",
-                      //   lineHeight: 1.4,
-                      //   // marginBottom: 4,
-                      // }}
-                      > */}
-                      <strong>{`${s.icon} ${v.name}: `}</strong>
-
-                      {v.description}
-                      {/* <span
-                          style={{
-                            fontSize: 10,
-                            fontWeight: 600,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.04em",
-                            color: s.timelineBorder,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {s.label}
-                        </span> */}
-                      {/* </div> */}
-                      {/* <p
-                        style={{
-                          margin: "0 0 4px 0",
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "var(--text-mid)",
-                        }}
-                      >
-                        📅 {v.weekRange}
-                      </p> */}
-                    </div>
-                  );
-                })}
-              </div>
-            }
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {vaccines.map((v) => {
+                const s = STATUS[v.status];
+                return (
+                  <div
+                    key={v.id}
+                    style={{
+                      padding: "12px 14px",
+                      background: s.timelineBg,
+                      borderRadius: 12,
+                      borderLeft: `4px solid ${s.timelineBorder}`,
+                      lineHeight: 1.5,
+                      fontSize: 13,
+                    }}
+                  >
+                    <strong>{`${s.icon} ${v.name}: `}</strong>
+                    {v.description}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

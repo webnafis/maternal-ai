@@ -36,14 +36,24 @@ export async function GET() {
 
   const vaccMap = new Map(vaccRecords.map((r) => [r.vaccine_id, r.status]));
 
-  const doneVaccines = VACCINES.filter((v) => vaccMap.get(v.id) === "done").map(
-    (v) => v.name
-  );
-  const dueVaccines = VACCINES.filter((v) => vaccMap.get(v.id) === "due").map(
-    (v) => v.name
-  );
+  // Helper: calculate status from week if not in DB
+  const getVaccineStatus = (vaccineId: string, eligibleFromWeek: number) => {
+    if (vaccMap.has(vaccineId)) return vaccMap.get(vaccineId) as string;
+    // Not in DB — calculate based on current week
+    if (week >= eligibleFromWeek) return "due";
+    return "upcoming";
+  };
+
+  const doneVaccines = VACCINES.filter(
+    (v) => getVaccineStatus(v.id, v.eligibleFromWeek) === "done"
+  ).map((v) => v.name);
+
+  const dueVaccines = VACCINES.filter(
+    (v) => getVaccineStatus(v.id, v.eligibleFromWeek) === "due"
+  ).map((v) => v.name);
+
   const upcomingVaccines = VACCINES.filter(
-    (v) => vaccMap.get(v.id) === "upcoming"
+    (v) => getVaccineStatus(v.id, v.eligibleFromWeek) === "upcoming"
   ).map((v) => v.name);
 
   const generatedAt = new Date().toLocaleDateString("en-GB", {

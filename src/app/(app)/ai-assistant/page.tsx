@@ -33,6 +33,35 @@ const QUICK_PROMPTS = [
   },
 ];
 
+/* ── Reusable pulse skeleton block ── */
+function PulseBlock({
+  w,
+  h,
+  r = 8,
+  bg = "rgba(200,169,110,0.18)",
+  style = {},
+}: {
+  w?: number | string;
+  h: number;
+  r?: number;
+  bg?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      style={{
+        width: w ?? "100%",
+        height: h,
+        borderRadius: r,
+        background: bg,
+        animation: "pulse 1.5s ease-in-out infinite",
+        flexShrink: 0,
+        ...style,
+      }}
+    />
+  );
+}
+
 export default function AIAssistantPage() {
   const { data: session, status } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -131,33 +160,227 @@ export default function AIAssistantPage() {
       },
     ]);
   }
+
+  /* ─────────────────────────────────────────
+     FULL-PAGE SKELETON (session loading)
+  ───────────────────────────────────────── */
   if (status === "loading") {
     return (
       <div
         style={{
+          padding: "24px",
+          maxWidth: 900,
+          margin: "0 auto",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "60vh",
           flexDirection: "column",
-          gap: 12,
+          minHeight: "100vh",
         }}
       >
+        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+
+        {/* Header skeleton */}
         <div
           style={{
-            width: 40,
-            height: 40,
-            borderRadius: "50%",
-            border: "3px solid rgba(200,169,110,0.2)",
-            borderTop: "3px solid var(--rose)",
-            animation: "spin 0.8s linear infinite",
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginBottom: 16,
+            flexWrap: "wrap",
+            gap: 10,
           }}
-        />
-        <p style={{ fontSize: 14, color: "var(--text-light)" }}>Loading…</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <PulseBlock w={230} h={30} r={8} bg="rgba(200,169,110,0.22)" />
+            <PulseBlock w={270} h={14} r={6} bg="rgba(200,169,110,0.12)" />
+          </div>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <PulseBlock w={108} h={28} r={20} bg="rgba(200,169,110,0.15)" />
+            <PulseBlock w={72} h={30} r={8} bg="rgba(200,169,110,0.12)" />
+          </div>
+        </div>
+
+        {/* Quick chips skeleton */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            marginBottom: 14,
+          }}
+        >
+          {[156, 138, 126, 150, 160, 142].map((w, i) => (
+            <PulseBlock
+              key={i}
+              w={w}
+              h={34}
+              r={20}
+              bg="rgba(200,169,110,0.14)"
+            />
+          ))}
+        </div>
+
+        {/* Chat area skeleton */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              flex: 1,
+              padding: 16,
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+              background: "var(--cream)",
+              borderRadius: "16px 16px 0 0",
+              border: "1px solid rgba(200,169,110,0.1)",
+              minHeight: 420,
+            }}
+          >
+            {/* Assistant bubble 1 — long welcome */}
+            <div
+              style={{
+                alignSelf: "flex-start",
+                maxWidth: "78%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 5,
+              }}
+            >
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: "18px 18px 18px 4px",
+                  background: "rgba(200,169,110,0.1)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  animation: "pulse 1.5s ease-in-out infinite",
+                }}
+              >
+                <PulseBlock h={11} r={6} bg="rgba(200,169,110,0.25)" />
+                <PulseBlock h={11} r={6} bg="rgba(200,169,110,0.2)" />
+                <PulseBlock w="60%" h={11} r={6} bg="rgba(200,169,110,0.2)" />
+              </div>
+              <PulseBlock w={44} h={10} r={4} bg="rgba(200,169,110,0.1)" />
+            </div>
+
+            {/* User bubble 1 */}
+            <div
+              style={{
+                alignSelf: "flex-end",
+                maxWidth: "55%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 5,
+                alignItems: "flex-end",
+              }}
+            >
+              <div
+                style={{
+                  padding: "12px 16px",
+                  borderRadius: "18px 18px 4px 18px",
+                  background: "rgba(232,117,106,0.18)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 7,
+                  animation: "pulse 1.5s ease-in-out infinite",
+                  minWidth: 180,
+                }}
+              >
+                <PulseBlock h={11} r={6} bg="rgba(232,117,106,0.3)" />
+                <PulseBlock w="70%" h={11} r={6} bg="rgba(232,117,106,0.25)" />
+              </div>
+              <PulseBlock w={36} h={10} r={4} bg="rgba(200,169,110,0.1)" />
+            </div>
+
+            {/* Assistant bubble 2 */}
+            <div
+              style={{
+                alignSelf: "flex-start",
+                maxWidth: "70%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 5,
+              }}
+            >
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: "18px 18px 18px 4px",
+                  background: "rgba(200,169,110,0.1)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  animation: "pulse 1.5s ease-in-out infinite",
+                }}
+              >
+                <PulseBlock h={11} r={6} bg="rgba(200,169,110,0.25)" />
+                <PulseBlock w="80%" h={11} r={6} bg="rgba(200,169,110,0.2)" />
+              </div>
+              <PulseBlock w={44} h={10} r={4} bg="rgba(200,169,110,0.1)" />
+            </div>
+
+            {/* User bubble 2 */}
+            <div
+              style={{
+                alignSelf: "flex-end",
+                maxWidth: "42%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 5,
+                alignItems: "flex-end",
+              }}
+            >
+              <div
+                style={{
+                  padding: "12px 16px",
+                  borderRadius: "18px 18px 4px 18px",
+                  background: "rgba(232,117,106,0.18)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 7,
+                  animation: "pulse 1.5s ease-in-out infinite",
+                  minWidth: 160,
+                }}
+              >
+                <PulseBlock h={11} r={6} bg="rgba(232,117,106,0.3)" />
+              </div>
+              <PulseBlock w={36} h={10} r={4} bg="rgba(200,169,110,0.1)" />
+            </div>
+
+            {/* Typing dots bubble placeholder */}
+            <div style={{ alignSelf: "flex-start" }}>
+              <div
+                style={{
+                  width: 82,
+                  height: 44,
+                  borderRadius: "18px 18px 18px 4px",
+                  background: "rgba(200,169,110,0.1)",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Input row skeleton */}
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              padding: "12px",
+              background: "var(--warm-white)",
+              borderRadius: "0 0 16px 16px",
+              border: "1px solid rgba(200,169,110,0.1)",
+              borderTop: "none",
+            }}
+          >
+            <PulseBlock w={46} h={46} r={12} bg="rgba(200,169,110,0.15)" />
+            <PulseBlock h={46} r={12} bg="rgba(200,169,110,0.1)" />
+            <PulseBlock w={52} h={46} r={12} bg="rgba(232,117,106,0.2)" />
+          </div>
+        </div>
       </div>
     );
   }
+
   function formatTime(iso?: string) {
     if (!iso) return "";
     return new Date(iso).toLocaleTimeString([], {
@@ -256,17 +479,166 @@ export default function AIAssistantPage() {
             border: "1px solid rgba(200,169,110,0.1)",
           }}
         >
+          {/* ── CHAT HISTORY LOADING SKELETON ── */}
           {initialLoading ? (
-            <div
-              style={{
-                textAlign: "center",
-                padding: 40,
-                color: "var(--text-light)",
-              }}
-            >
-              <div style={{ fontSize: 36, marginBottom: 8 }}>🌸</div>
-              <p style={{ fontSize: 14 }}>Loading your conversation…</p>
-            </div>
+            <>
+              <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+
+              {/* Skeleton assistant bubble */}
+              <div
+                style={{
+                  alignSelf: "flex-start",
+                  maxWidth: "78%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 5,
+                }}
+              >
+                <div
+                  style={{
+                    padding: "14px 16px",
+                    borderRadius: "18px 18px 18px 4px",
+                    background: "rgba(200,169,110,0.1)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                >
+                  {[100, 85, 60].map((pct, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        height: 11,
+                        width: `${pct}%`,
+                        borderRadius: 6,
+                        background: "rgba(200,169,110,0.28)",
+                      }}
+                    />
+                  ))}
+                </div>
+                <div
+                  style={{
+                    height: 10,
+                    width: 44,
+                    borderRadius: 4,
+                    background: "rgba(200,169,110,0.1)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                />
+              </div>
+
+              {/* Skeleton user bubble */}
+              <div
+                style={{
+                  alignSelf: "flex-end",
+                  maxWidth: "50%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 5,
+                  alignItems: "flex-end",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    borderRadius: "18px 18px 4px 18px",
+                    background: "rgba(232,117,106,0.18)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 7,
+                    animation: "pulse 1.5s ease-in-out infinite",
+                    minWidth: 160,
+                  }}
+                >
+                  <div
+                    style={{
+                      height: 11,
+                      borderRadius: 6,
+                      background: "rgba(232,117,106,0.35)",
+                    }}
+                  />
+                  <div
+                    style={{
+                      height: 11,
+                      width: "65%",
+                      borderRadius: 6,
+                      background: "rgba(232,117,106,0.28)",
+                    }}
+                  />
+                </div>
+                <div
+                  style={{
+                    height: 10,
+                    width: 36,
+                    borderRadius: 4,
+                    background: "rgba(200,169,110,0.1)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                />
+              </div>
+
+              {/* Skeleton assistant bubble 2 */}
+              <div
+                style={{
+                  alignSelf: "flex-start",
+                  maxWidth: "65%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 5,
+                }}
+              >
+                <div
+                  style={{
+                    padding: "14px 16px",
+                    borderRadius: "18px 18px 18px 4px",
+                    background: "rgba(200,169,110,0.1)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: 11,
+                      borderRadius: 6,
+                      background: "rgba(200,169,110,0.28)",
+                    }}
+                  />
+                  <div
+                    style={{
+                      height: 11,
+                      width: "75%",
+                      borderRadius: 6,
+                      background: "rgba(200,169,110,0.22)",
+                    }}
+                  />
+                </div>
+                <div
+                  style={{
+                    height: 10,
+                    width: 44,
+                    borderRadius: 4,
+                    background: "rgba(200,169,110,0.1)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                />
+              </div>
+
+              {/* Soft label */}
+              <div
+                style={{
+                  textAlign: "center",
+                  marginTop: 8,
+                  fontSize: 12,
+                  color: "var(--text-light)",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                }}
+              >
+                🌸 Loading your conversation…
+              </div>
+            </>
           ) : (
             <>
               {messages.map((msg, i) => (
@@ -323,7 +695,11 @@ export default function AIAssistantPage() {
                     }}
                   >
                     <div
-                      style={{ display: "flex", gap: 5, alignItems: "center" }}
+                      style={{
+                        display: "flex",
+                        gap: 5,
+                        alignItems: "center",
+                      }}
                     >
                       <span className="typing-dot" />
                       <span className="typing-dot" />
@@ -350,15 +726,10 @@ export default function AIAssistantPage() {
             borderTop: "none",
           }}
         >
-          {/* NEW: Free Audio Input System */}
           <AudioRecorder
             disabled={sending}
             onTranscriptionComplete={(transcribedText) => {
-              // Option A: Put text into field so user can check before sending
               setInput(transcribedText);
-
-              // Option B: To instantly hit submit instead, uncomment line below:
-              // sendMessage(transcribedText);
             }}
           />
           <input

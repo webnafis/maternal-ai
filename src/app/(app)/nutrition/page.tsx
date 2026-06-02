@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { getTrimester, NUTRITION_DATA } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface Nutrient {
   name: string;
@@ -34,10 +33,12 @@ export default function NutritionPage() {
   const trimester = getTrimester(week);
   const plan: NutritionPlan = NUTRITION_DATA[trimester];
 
-  // Replace the existing if (loading) block
+  // Beautiful pulse loader
   if (loading || status === "loading") {
     return (
       <div style={{ padding: "24px", maxWidth: 1100, margin: "0 auto" }}>
+        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+
         {/* Header */}
         <div
           style={{
@@ -50,10 +51,36 @@ export default function NutritionPage() {
           }}
         >
           <div>
-            <Skeleton className="h-8 w-64 mb-2" />
-            <Skeleton className="h-4 w-80" />
+            <div
+              style={{
+                height: 32,
+                width: 256,
+                borderRadius: 8,
+                background: "rgba(200,169,110,0.22)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 8,
+              }}
+            />
+            <div
+              style={{
+                height: 14,
+                width: 320,
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.12)",
+                animation: "pulse 1.5s ease-in-out infinite",
+              }}
+            />
           </div>
-          <Skeleton className="h-6 w-40 rounded-full" />
+          <div
+            style={{
+              height: 24,
+              width: 168,
+              borderRadius: 20,
+              background: "rgba(200,169,110,0.15)",
+              animation: "pulse 1.5s ease-in-out infinite",
+              alignSelf: "center",
+            }}
+          />
         </div>
 
         {/* Top grid — nutrients + supplements */}
@@ -67,8 +94,26 @@ export default function NutritionPage() {
         >
           {/* Nutrient bars skeleton */}
           <div className="JotnoAI-card">
-            <Skeleton className="h-5 w-72 mb-2" />
-            <Skeleton className="h-4 w-full mb-5" />
+            <div
+              style={{
+                height: 20,
+                width: 280,
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.2)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 8,
+              }}
+            />
+            <div
+              style={{
+                height: 13,
+                width: "100%",
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.1)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 20,
+              }}
+            />
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i}>
@@ -79,10 +124,34 @@ export default function NutritionPage() {
                       marginBottom: 6,
                     }}
                   >
-                    <Skeleton className="h-3 w-24" />
-                    <Skeleton className="h-3 w-32" />
+                    <div
+                      style={{
+                        height: 12,
+                        width: 96,
+                        borderRadius: 6,
+                        background: "rgba(200,169,110,0.2)",
+                        animation: "pulse 1.5s ease-in-out infinite",
+                      }}
+                    />
+                    <div
+                      style={{
+                        height: 12,
+                        width: 128,
+                        borderRadius: 6,
+                        background: "rgba(200,169,110,0.12)",
+                        animation: "pulse 1.5s ease-in-out infinite",
+                      }}
+                    />
                   </div>
-                  <Skeleton className="h-2.5 w-full rounded-full" />
+                  <div
+                    style={{
+                      height: 10,
+                      width: "100%",
+                      borderRadius: 10,
+                      background: "rgba(200,169,110,0.12)",
+                      animation: "pulse 1.5s ease-in-out infinite",
+                    }}
+                  />
                 </div>
               ))}
             </div>
@@ -90,8 +159,26 @@ export default function NutritionPage() {
 
           {/* Supplements skeleton */}
           <div className="JotnoAI-card">
-            <Skeleton className="h-5 w-56 mb-2" />
-            <Skeleton className="h-4 w-full mb-4" />
+            <div
+              style={{
+                height: 20,
+                width: 224,
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.2)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 8,
+              }}
+            />
+            <div
+              style={{
+                height: 13,
+                width: "100%",
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.1)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 16,
+              }}
+            />
             <div
               style={{
                 display: "grid",
@@ -100,7 +187,16 @@ export default function NutritionPage() {
               }}
             >
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Skeleton key={i} className="h-12 w-full rounded-xl" />
+                <div
+                  key={i}
+                  style={{
+                    height: 48,
+                    borderRadius: 12,
+                    background: "rgba(200,169,110,0.1)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                    border: "1px solid rgba(200,169,110,0.12)",
+                  }}
+                />
               ))}
             </div>
           </div>
@@ -116,29 +212,92 @@ export default function NutritionPage() {
         >
           {/* Safe foods skeleton */}
           <div className="JotnoAI-card">
-            <Skeleton className="h-5 w-56 mb-2" />
-            <Skeleton className="h-4 w-full mb-4" />
+            <div
+              style={{
+                height: 20,
+                width: 224,
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.2)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 8,
+              }}
+            />
+            <div
+              style={{
+                height: 13,
+                width: "100%",
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.1)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 16,
+              }}
+            />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Skeleton key={i} className="h-10 w-full rounded-xl" />
+                <div
+                  key={i}
+                  style={{
+                    height: 40,
+                    borderRadius: 10,
+                    background: "rgba(200,169,110,0.08)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                    border: "1.5px solid rgba(200,169,110,0.12)",
+                  }}
+                />
               ))}
             </div>
           </div>
 
           {/* Avoid foods skeleton */}
           <div className="JotnoAI-card">
-            <Skeleton className="h-5 w-48 mb-2" />
-            <Skeleton className="h-4 w-full mb-4" />
+            <div
+              style={{
+                height: 20,
+                width: 192,
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.2)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 8,
+              }}
+            />
+            <div
+              style={{
+                height: 13,
+                width: "100%",
+                borderRadius: 6,
+                background: "rgba(200,169,110,0.1)",
+                animation: "pulse 1.5s ease-in-out infinite",
+                marginBottom: 16,
+              }}
+            />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Skeleton key={i} className="h-10 w-full rounded-xl" />
+                <div
+                  key={i}
+                  style={{
+                    height: 40,
+                    borderRadius: 10,
+                    background: "rgba(255,220,220,0.35)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                    border: "1.5px solid rgba(255,179,179,0.25)",
+                  }}
+                />
               ))}
             </div>
           </div>
         </div>
 
         {/* Hydration banner skeleton */}
-        <Skeleton className="h-16 w-full rounded-xl mt-6" />
+        <div
+          style={{
+            height: 64,
+            borderRadius: 12,
+            background: "rgba(200,169,110,0.1)",
+            animation: "pulse 1.5s ease-in-out infinite",
+            marginTop: 24,
+            border: "1px solid rgba(200,169,110,0.12)",
+          }}
+        />
       </div>
     );
   }
