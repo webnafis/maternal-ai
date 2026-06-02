@@ -1,37 +1,14 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import AudioRecorder from "@/components/AudioRecorder";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   created_at?: string;
 }
-
-const QUICK_PROMPTS = [
-  {
-    label: "🥗 Trimester nutrition",
-    msg: "What foods should I eat in my trimester?",
-  },
-  { label: "🩺 About cramping", msg: "Is mild cramping normal in pregnancy?" },
-  {
-    label: "💧 Water intake",
-    msg: "How much water should I drink daily during pregnancy?",
-  },
-  {
-    label: "🏃 Safe exercises",
-    msg: "What exercises are safe during pregnancy?",
-  },
-  {
-    label: "👶 Fetal movement",
-    msg: "When should I be concerned about fetal movement?",
-  },
-  {
-    label: "💙 Mental health",
-    msg: "What are signs of postpartum depression?",
-  },
-];
 
 /* ── Reusable pulse skeleton block ── */
 function PulseBlock({
@@ -64,6 +41,18 @@ function PulseBlock({
 
 export default function AIAssistantPage() {
   const { data: session, status } = useSession();
+  const { language, t } = useLanguage();
+  const quickPrompts = useMemo(
+    () => [
+      { label: t("aiAssistant.quickLabels.nutrition"), msg: t("aiAssistant.quickPrompts.nutrition") },
+      { label: t("aiAssistant.quickLabels.cramping"), msg: t("aiAssistant.quickPrompts.cramping") },
+      { label: t("aiAssistant.quickLabels.water"), msg: t("aiAssistant.quickPrompts.water") },
+      { label: t("aiAssistant.quickLabels.exercise"), msg: t("aiAssistant.quickPrompts.exercise") },
+      { label: t("aiAssistant.quickLabels.movement"), msg: t("aiAssistant.quickPrompts.movement") },
+      { label: t("aiAssistant.quickLabels.mental"), msg: t("aiAssistant.quickPrompts.mental") },
+    ],
+    [t, language]
+  );
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -76,7 +65,8 @@ export default function AIAssistantPage() {
   /* ── load history on mount ── */
   useEffect(() => {
     loadHistory();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language, name, week]);
 
   /* ── auto-scroll ── */
   useEffect(() => {
@@ -94,7 +84,7 @@ export default function AIAssistantPage() {
           setMessages([
             {
               role: "assistant",
-              content: `Assalamu Alaikum, ${name}! 🌸 I'm your JotnoAI AI health assistant. I'm here to support your pregnancy journey at Week ${week}. Ask me anything about nutrition, symptoms, exercises, or what to expect. How can I help you today?`,
+              content: t("aiAssistant.welcomeMessage", { name, week }),
               created_at: new Date().toISOString(),
             },
           ]);
@@ -130,9 +120,7 @@ export default function AIAssistantPage() {
         ...prev,
         {
           role: "assistant",
-          content:
-            data.reply ??
-            "I'm having trouble connecting right now. Please try again.",
+          content: data.reply ?? t("aiAssistant.errorReply"),
           created_at: new Date().toISOString(),
         },
       ]);
@@ -141,8 +129,7 @@ export default function AIAssistantPage() {
         ...prev,
         {
           role: "assistant",
-          content:
-            "I'm having trouble connecting. For urgent concerns, please contact your doctor directly. 💙",
+          content: t("aiAssistant.connectionError"),
           created_at: new Date().toISOString(),
         },
       ]);
@@ -155,7 +142,7 @@ export default function AIAssistantPage() {
     setMessages([
       {
         role: "assistant",
-        content: `Chat cleared! 🌸 Hello ${name}, I'm here to help with your Week ${week} pregnancy. What would you like to know?`,
+        content: t("aiAssistant.clearedMessage", { name, week }),
         created_at: new Date().toISOString(),
       },
     ]);
@@ -421,20 +408,22 @@ export default function AIAssistantPage() {
               marginBottom: 4,
             }}
           >
-            AI Health Assistant
+            {t("aiAssistant.title")}
           </h2>
           <p style={{ fontSize: 13, color: "var(--text-light)" }}>
-            Powered by Claude — Safe, empathetic guidance
+            {t("aiAssistant.poweredBy")}
           </p>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <span className="JotnoAI-badge badge-sage">🤖 AI Powered</span>
+          <span className="JotnoAI-badge badge-sage">
+            {t("aiAssistant.aiPoweredBadge")}
+          </span>
           <button
             className="btn-outline"
             style={{ fontSize: 12, padding: "6px 12px" }}
             onClick={clearChat}
           >
-            🗑️ Clear
+            {t("aiAssistant.clearChatBtn")}
           </button>
         </div>
       </div>
@@ -443,7 +432,7 @@ export default function AIAssistantPage() {
       <div
         style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}
       >
-        {QUICK_PROMPTS.map((q) => (
+        {quickPrompts.map((q) => (
           <button
             key={q.label}
             className="chip"
@@ -735,7 +724,7 @@ export default function AIAssistantPage() {
           <input
             className="JotnoAI-input"
             style={{ flex: 1, borderRadius: 12, fontSize: 14 }}
-            placeholder="Ask anything about pregnancy, symptoms, nutrition…"
+            placeholder={t("aiAssistant.placeholder")}
             value={input}
             disabled={sending}
             onChange={(e) => setInput(e.target.value)}

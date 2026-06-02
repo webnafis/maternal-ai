@@ -87,6 +87,32 @@ export async function initializeSchema() {
   await sql`CREATE INDEX IF NOT EXISTS idx_mood_user_date ON mood_entries(user_id, date);`;
   await sql`CREATE INDEX IF NOT EXISTS idx_vacc_user ON vaccination_records(user_id);`;
   await sql`CREATE INDEX IF NOT EXISTS idx_chat_user ON chat_history(user_id);`;
+
+  await migrateI18nColumns();
+  await migrateAuthColumns();
+}
+
+/** Password auth column */
+export async function migrateAuthColumns() {
+  try {
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT`;
+  } catch (e) {
+    console.warn("auth column migration:", e);
+  }
+}
+
+/** Add JSON translation cache columns for multilingual AI content */
+export async function migrateI18nColumns() {
+  try {
+    await sql`ALTER TABLE symptom_logs ADD COLUMN IF NOT EXISTS ai_analysis_i18n TEXT`;
+    await sql`ALTER TABLE mood_entries ADD COLUMN IF NOT EXISTS ai_feedback_i18n TEXT`;
+    await sql`ALTER TABLE chat_history ADD COLUMN IF NOT EXISTS content_i18n TEXT`;
+    await sql`ALTER TABLE symptom_logs ADD COLUMN IF NOT EXISTS source_lang TEXT DEFAULT 'en'`;
+    await sql`ALTER TABLE mood_entries ADD COLUMN IF NOT EXISTS source_lang TEXT DEFAULT 'en'`;
+    await sql`ALTER TABLE chat_history ADD COLUMN IF NOT EXISTS source_lang TEXT DEFAULT 'en'`;
+  } catch (e) {
+    console.warn("i18n column migration:", e);
+  }
 }
 
 // ─── User Operations ───────────────────────────────────────────────────────
@@ -106,11 +132,14 @@ export async function createUser(
   id: string,
   name: string,
   pregnancyWeek: number,
-  dueDate?: string
+  dueDate?: string,
+  language?: string,
+  passwordHash?: string
 ) {
+  const lang = language === "bn" ? "bn" : "en";
   await sql`
-    INSERT INTO users (id, name, pregnancy_week, due_date)
-    VALUES (${id}, ${name}, ${pregnancyWeek}, ${dueDate || null})
+    INSERT INTO users (id, name, pregnancy_week, due_date, language, password_hash)
+    VALUES (${id}, ${name}, ${pregnancyWeek}, ${dueDate || null}, ${lang}, ${passwordHash || null})
   `;
   return getUserById(id);
 }
@@ -120,7 +149,8 @@ export async function updateUserWeek(userId: string, week: number) {
 }
 
 export async function updateUserLanguage(userId: string, language: string) {
-  await sql`UPDATE users SET language = ${language}, updated_at = CURRENT_TIMESTAMP WHERE id = ${userId}`;
+  const lang = language === "bn" ? "bn" : "en";
+  await sql`UPDATE users SET language = ${lang}, updated_at = CURRENT_TIMESTAMP WHERE id = ${userId}`;
 }
 
 // ─── Checklist Operations ───────────────────────────────────────────────────
@@ -176,16 +206,30 @@ export async function saveSymptomLog(
   date: string,
   symptoms: string[],
   severity: string,
-  aiAnalysis?: string
+  aiAnalysis?: string,
+  aiAnalysisI18n?: string,
+  sourceLang?: string
 ) {
   const id = uuidv4();
   const symptomsStr = JSON.stringify(symptoms);
   await sql`
-    INSERT INTO symptom_logs (id, user_id, date, symptoms, severity, ai_analysis, saved_by_user)
+    INSERT INTO symptom_logs (id, user_id, date, symptoms, severity, ai_analysis, ai_analysis_i18n, source_lang, saved_by_user)
     VALUES (${id}, ${userId}, ${date}, ${symptomsStr}, ${severity}, ${
     aiAnalysis || null
-  }, TRUE)
+  }, ${aiAnalysisI18n || null}, ${sourceLang || "en"}, TRUE)
   `;
+}
+
+export async function updateSymptomLogI18n(
+  logId: string,
+  i18n: string,
+  primary?: string
+) {
+  if (primary) {
+    await sql`UPDATE symptom_logs SET ai_analysis_i18n = ${i18n}, ai_analysis = ${primary} WHERE id = ${logId}`;
+  } else {
+    await sql`UPDATE symptom_logs SET ai_analysis_i18n = ${i18n} WHERE id = ${logId}`;
+  }
 }
 
 // ─── Mood Operations ─────────────────────────────────────────────────────────
@@ -209,24 +253,40 @@ export async function upsertMoodEntry(
     journal?: string;
     phqScore?: number;
     aiFeedback?: string;
+    aiFeedbackI18n?: string;
+    sourceLang?: string;
   }
 ) {
   const id = `me_${userId}_${date}`;
   await sql`
-    INSERT INTO mood_entries (id, user_id, date, mood_emoji, mood_label, mood_score, journal, phq_score, ai_feedback)
+    INSERT INTO mood_entries (id, user_id, date, mood_emoji, mood_label, mood_score, journal, phq_score, ai_feedback, ai_feedback_i18n, source_lang)
     VALUES (${id}, ${userId}, ${date}, ${data.moodEmoji || null}, ${
     data.moodLabel || null
   }, ${data.moodScore ?? null}, ${data.journal || null}, ${
     data.phqScore ?? null
-  }, ${data.aiFeedback || null})
+  }, ${data.aiFeedback || null}, ${data.aiFeedbackI18n || null}, ${data.sourceLang || "en"})
     ON CONFLICT(user_id, date) DO UPDATE SET
       mood_emoji = COALESCE(EXCLUDED.mood_emoji, mood_entries.mood_emoji),
       mood_label = COALESCE(EXCLUDED.mood_label, mood_entries.mood_label),
       mood_score = COALESCE(EXCLUDED.mood_score, mood_entries.mood_score),
       journal = COALESCE(EXCLUDED.journal, mood_entries.journal),
       phq_score = COALESCE(EXCLUDED.phq_score, mood_entries.phq_score),
-      ai_feedback = COALESCE(EXCLUDED.ai_feedback, mood_entries.ai_feedback)
+      ai_feedback = COALESCE(EXCLUDED.ai_feedback, mood_entries.ai_feedback),
+      ai_feedback_i18n = COALESCE(EXCLUDED.ai_feedback_i18n, mood_entries.ai_feedback_i18n),
+      source_lang = COALESCE(EXCLUDED.source_lang, mood_entries.source_lang)
   `;
+}
+
+export async function updateMoodEntryI18n(
+  entryId: string,
+  i18n: string,
+  primary?: string
+) {
+  if (primary) {
+    await sql`UPDATE mood_entries SET ai_feedback_i18n = ${i18n}, ai_feedback = ${primary} WHERE id = ${entryId}`;
+  } else {
+    await sql`UPDATE mood_entries SET ai_feedback_i18n = ${i18n} WHERE id = ${entryId}`;
+  }
 }
 
 // ─── Vaccination Operations ──────────────────────────────────────────────────
@@ -255,10 +315,24 @@ export async function getChatHistory(userId: string, limit = 50) {
 export async function saveChatMessage(
   userId: string,
   role: "user" | "assistant",
-  content: string
+  content: string,
+  contentI18n?: string,
+  sourceLang?: string
 ) {
   const id = uuidv4();
-  await sql`INSERT INTO chat_history (id, user_id, role, content) VALUES (${id}, ${userId}, ${role}, ${content})`;
+  await sql`INSERT INTO chat_history (id, user_id, role, content, content_i18n, source_lang) VALUES (${id}, ${userId}, ${role}, ${content}, ${contentI18n || null}, ${sourceLang || (role === "assistant" ? "en" : null)})`;
+}
+
+export async function updateChatMessageI18n(
+  messageId: string,
+  i18n: string,
+  primary?: string
+) {
+  if (primary) {
+    await sql`UPDATE chat_history SET content_i18n = ${i18n}, content = ${primary} WHERE id = ${messageId}`;
+  } else {
+    await sql`UPDATE chat_history SET content_i18n = ${i18n} WHERE id = ${messageId}`;
+  }
 }
 
 export async function clearChatHistory(userId: string) {
@@ -272,6 +346,7 @@ export interface User {
   pregnancy_week: number;
   due_date: string | null;
   language: string;
+  password_hash?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -292,6 +367,8 @@ export interface SymptomLog {
   symptoms: string[];
   severity: string;
   ai_analysis: string | null;
+  ai_analysis_i18n?: string | null;
+  source_lang?: string | null;
   saved_by_user: boolean;
   created_at: string;
 }
@@ -306,6 +383,8 @@ export interface MoodEntry {
   journal: string | null;
   phq_score: number | null;
   ai_feedback: string | null;
+  ai_feedback_i18n?: string | null;
+  source_lang?: string | null;
   created_at: string;
 }
 
@@ -322,5 +401,7 @@ export interface ChatMessage {
   user_id: string;
   role: string;
   content: string;
+  content_i18n?: string | null;
+  source_lang?: string | null;
   timestamp: string;
 }

@@ -5,6 +5,7 @@ import { getUserById } from "@/lib/db";
 import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
 import TopBar from "@/components/TopBar";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 export default async function AppLayout({
   children,
@@ -12,12 +13,13 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) redirect("/");
+  if (!session?.user?.id) redirect("/login");
 
   const user = await getUserById(session.user.id);
-  if (!user) redirect("/");
+  if (!user) redirect("/login");
 
   return (
+    <LanguageProvider initialLanguage={user.language}>
     <div style={{ display: "flex", minHeight: "100vh" }}>
       {/* Desktop Sidebar */}
       <div className="desktop-only-sidebar">
@@ -72,5 +74,6 @@ export default async function AppLayout({
         }
       `}</style>
     </div>
+    </LanguageProvider>
   );
 }

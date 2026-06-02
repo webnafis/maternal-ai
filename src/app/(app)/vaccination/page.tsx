@@ -1,6 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getVaccineStatusLabel } from "@/lib/i18n/content";
 
 interface Vaccine {
   id: string;
@@ -20,7 +22,6 @@ const STATUS = {
     circleColor: "var(--sage)",
     timelineBg: "var(--sage-pale)",
     timelineBorder: "var(--sage)",
-    label: "Completed",
   },
   due: {
     icon: "⏰",
@@ -29,7 +30,6 @@ const STATUS = {
     circleColor: "var(--gold)",
     timelineBg: "var(--rose-pale)",
     timelineBorder: "var(--rose)",
-    label: "Due Now",
   },
   upcoming: {
     icon: "⏳",
@@ -38,26 +38,19 @@ const STATUS = {
     circleColor: "var(--text-light)",
     timelineBg: "#F5F5F5",
     timelineBorder: "#C8C8C8",
-    label: "Upcoming",
   },
 } as const;
 
 export default function VaccinationPage() {
   const { data: session, status } = useSession();
+  const { language, t } = useLanguage();
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   // Stores the vaccine ID pending an "undo done" confirmation, or null
   const [confirmUndoneId, setConfirmUndoneId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      // 👈 only fetch when session is confirmed ready
-      fetchVaccines();
-    }
-  }, [status]);
-
-  const fetchVaccines = async () => {
+  const fetchVaccines = useCallback(async () => {
     setLoading(true);
     try {
       const currentWeek = (session?.user as any)?.pregnancyWeek || 1;
@@ -71,7 +64,11 @@ export default function VaccinationPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session, status]);
+
+  useEffect(() => {
+    if (status === "authenticated") fetchVaccines();
+  }, [status, language, fetchVaccines]);
 
   // Mark a due vaccine as done immediately
   const markDone = async (id: string) => {
@@ -365,11 +362,10 @@ export default function VaccinationPage() {
             marginBottom: 4,
           }}
         >
-          🛡️ Immunization Schedule
+          {t("vaccination.title")}
         </h2>
         <p style={{ fontSize: 14, color: "var(--text-mid)" }}>
-          Track critical pregnancy vaccines recommended for your gestational
-          week timeline.
+          {t("vaccination.subtitle")}
         </p>
       </div>
 
@@ -415,7 +411,7 @@ export default function VaccinationPage() {
             <div
               style={{ fontSize: 12, color: "var(--text-light)", marginTop: 2 }}
             >
-              Doses Secured
+              {t("vaccination.dosesSecured")}
             </div>
           </div>
         </div>
@@ -453,7 +449,7 @@ export default function VaccinationPage() {
             <div
               style={{ fontSize: 12, color: "var(--text-light)", marginTop: 2 }}
             >
-              Pending Due
+              {t("vaccination.pendingDue")}
             </div>
           </div>
         </div>
@@ -491,7 +487,7 @@ export default function VaccinationPage() {
             <div
               style={{ fontSize: 12, color: "var(--text-light)", marginTop: 2 }}
             >
-              Upcoming
+              {t("vaccination.upcoming")}
             </div>
           </div>
         </div>
@@ -510,6 +506,7 @@ export default function VaccinationPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {vaccines.map((v) => {
             const s = STATUS[v.status];
+            const statusLabel = getVaccineStatusLabel(language, v.status);
             return (
               <div
                 className="vacc-item animate-fade-in"
@@ -569,7 +566,7 @@ export default function VaccinationPage() {
                       className={`JotnoAI-badge ${s.badgeClass}`}
                       style={{ fontSize: 10, textTransform: "capitalize" }}
                     >
-                      {v.status}
+                      {statusLabel}
                     </span>
                   </div>
                   <p
@@ -579,7 +576,7 @@ export default function VaccinationPage() {
                       color: "var(--text-mid)",
                     }}
                   >
-                    📅 Target Window:{" "}
+                    📅 {t("vaccination.targetWindow")}:{" "}
                     <strong style={{ color: "var(--text-dark)" }}>
                       {v.weekRange}
                     </strong>
@@ -599,7 +596,7 @@ export default function VaccinationPage() {
                       userSelect: "none",
                     }}
                   >
-                    Not Yet Due
+                    {t("vaccination.notYetDue")}
                   </span>
                 ) : v.status === "due" ? (
                   <button
@@ -614,7 +611,7 @@ export default function VaccinationPage() {
                     onClick={() => markDone(v.id)}
                     disabled={updatingId !== null}
                   >
-                    Mark Done
+                    {t("vaccination.markDone")}
                   </button>
                 ) : (
                   <button
@@ -629,7 +626,7 @@ export default function VaccinationPage() {
                     onClick={() => setConfirmUndoneId(v.id)}
                     disabled={updatingId !== null}
                   >
-                    Mark Undone
+                    {t("vaccination.markUndone")}
                   </button>
                 )}
               </div>
@@ -648,7 +645,7 @@ export default function VaccinationPage() {
                 color: "var(--text-dark)",
               }}
             >
-              💡 Clinical Timeline Guidelines
+              {t("vaccination.timelineTitle")}
             </h3>
             <p
               style={{
@@ -658,9 +655,7 @@ export default function VaccinationPage() {
                 margin: "0 0 16px 0",
               }}
             >
-              Vaccinations during pregnancy safely transfer essential active
-              antibodies directly across the placenta structure to support
-              newborn shielding lines prior to birth.
+              {t("vaccination.timelineDesc")}
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {vaccines.map((v) => {
@@ -727,7 +722,7 @@ export default function VaccinationPage() {
                 color: "var(--text-dark)",
               }}
             >
-              Remove Completion?
+              {t("vaccination.removeTitle")}
             </h4>
             <p
               style={{
@@ -738,12 +733,7 @@ export default function VaccinationPage() {
                 marginBottom: 22,
               }}
             >
-              Mark{" "}
-              <strong style={{ color: "var(--text-dark)" }}>
-                {confirmingVaccine.name}
-              </strong>{" "}
-              as not done? The status will revert based on your current
-              pregnancy week.
+              {t("vaccination.removeBody", { name: confirmingVaccine.name })}
             </p>
             <div style={{ display: "flex", gap: 10 }}>
               <button
@@ -756,7 +746,7 @@ export default function VaccinationPage() {
                 }}
                 onClick={() => setConfirmUndoneId(null)}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 className="btn-primary"
@@ -768,7 +758,7 @@ export default function VaccinationPage() {
                 }}
                 onClick={confirmMarkUndone}
               >
-                Yes, Remove
+                {t("vaccination.yesRemove")}
               </button>
             </div>
           </div>

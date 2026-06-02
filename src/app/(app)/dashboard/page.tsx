@@ -8,16 +8,22 @@ import {
   getTrimester,
   getProgress,
   getDaysLeft,
-  getGreeting,
-  CHECKLIST_ITEMS,
-  WEEK_FOCUS,
 } from "@/lib/utils";
+import {
+  getLocalizedChecklist,
+  getLocalizedWeekFocus,
+  getLocalizedGreeting,
+  getTrimesterDisplay,
+} from "@/lib/i18n/content";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { language, t } = useLanguage();
+  const checklistItems = getLocalizedChecklist(language);
   const [checklist, setChecklist] = useState<boolean[]>(
-    CHECKLIST_ITEMS.map(() => false)
+    checklistItems.map(() => false)
   );
   // const [loading, setLoading] = useState(true);
   const [week, setWeek] = useState<number | null>(null); // 👈 null instead of 1
@@ -254,7 +260,7 @@ export default function DashboardPage() {
             </div>
             {/* Checklist rows */}
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {CHECKLIST_ITEMS.map((_, i) => (
+              {checklistItems.map((_, i) => (
                 <div
                   key={i}
                   style={{
@@ -340,9 +346,10 @@ export default function DashboardPage() {
   const trimester = getTrimester(week);
   const progress = getProgress(week);
   const daysLeft = getDaysLeft(week);
-  const greeting = getGreeting();
+  const greeting = getLocalizedGreeting(language);
   const name = session?.user?.name || "";
-  const focus = WEEK_FOCUS[trimester];
+  const focus = getLocalizedWeekFocus(language, trimester);
+  const trimesterLabel = getTrimesterDisplay(language, trimester);
   const completed = checklist.filter(Boolean).length;
 
   return (
@@ -373,10 +380,12 @@ export default function DashboardPage() {
             {greeting}, {name} 🌸
           </h2>
           <p style={{ fontSize: 14, color: "var(--text-mid)" }}>
-            Week {week} of your pregnancy
+            {t("dashboard.subtitle")} · {t("common.weekOf", { week })}
           </p>
         </div>
-        <span className="JotnoAI-badge badge-rose">{trimester} Trimester</span>
+        <span className="JotnoAI-badge badge-rose">
+          {t("common.trimester", { n: trimesterLabel })}
+        </span>
       </div>
 
       {/* Stats */}
@@ -389,13 +398,13 @@ export default function DashboardPage() {
         }}
       >
         {[
-          { icon: "🍼", value: daysLeft, label: "Days Until Due Date" },
-          { icon: "❤️", value: "Normal", label: "Health Status" },
-          { icon: "📊", value: `${progress}%`, label: "Journey Complete" },
+          { icon: "🍼", value: daysLeft, label: t("dashboard.daysUntilDue") },
+          { icon: "❤️", value: t("dashboard.healthNormal"), label: t("dashboard.healthStatus") },
+          { icon: "📊", value: `${progress}%`, label: t("dashboard.journeyComplete") },
           {
             icon: "✅",
-            value: `${completed}/${CHECKLIST_ITEMS.length}`,
-            label: "Today's Tasks",
+            value: `${completed}/${checklistItems.length}`,
+            label: t("dashboard.todaysTasks"),
           },
         ].map((stat) => (
           <div
@@ -451,7 +460,7 @@ export default function DashboardPage() {
               color: "var(--text-dark)",
             }}
           >
-            🌟 This Week's Focus
+            🌟 {t("dashboard.weekFocus")}
           </h3>
           <p
             style={{ fontSize: 14, color: "var(--text-mid)", lineHeight: 1.8 }}
@@ -477,15 +486,18 @@ export default function DashboardPage() {
                 color: "var(--text-dark)",
               }}
             >
-              ✅ Today's Checklist
+              ✅ {t("dashboard.dailyChecklist")}
             </h3>
             <span className="JotnoAI-badge badge-sage" style={{ fontSize: 11 }}>
-              {completed}/{CHECKLIST_ITEMS.length}
+              {t("dashboard.completed", {
+                done: completed,
+                total: checklistItems.length,
+              })}
             </span>
           </div>
           {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {CHECKLIST_ITEMS.map((item, i) => (
+              {checklistItems.map((item, i) => (
                 <button
                   key={i}
                   onClick={() => toggleItem(i)}
@@ -540,20 +552,20 @@ export default function DashboardPage() {
             color: "var(--text-dark)",
           }}
         >
-          📌 Quick Actions
+          📌 {t("dashboard.quickActions")}
         </h3>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
           <Link href="/ai-assistant">
-            <button className="btn-primary">💬 Ask AI Assistant</button>
+            <button className="btn-primary">💬 {t("dashboard.aiChat")}</button>
           </Link>
           <Link href="/symptoms">
-            <button className="btn-outline">🩺 Check Symptoms</button>
+            <button className="btn-outline">🩺 {t("dashboard.logSymptoms")}</button>
           </Link>
           <Link href="/mental-health">
-            <button className="btn-sage">🧘 Log Mood</button>
+            <button className="btn-sage">🧘 {t("dashboard.moodCheck")}</button>
           </Link>
           <Link href="/doctor-summary">
-            <button className="btn-outline">📋 Doctor Summary</button>
+            <button className="btn-outline">📋 {t("nav.doctorSummary")}</button>
           </Link>
         </div>
       </div>

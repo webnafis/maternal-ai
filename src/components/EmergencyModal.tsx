@@ -1,5 +1,6 @@
 'use client';
-import { EMERGENCY_CONTACTS } from '@/lib/utils';
+import { getLocalizedEmergencyContacts } from '@/lib/i18n/content';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface EmergencyModalProps {
   open: boolean;
@@ -7,6 +8,8 @@ interface EmergencyModalProps {
 }
 
 export default function EmergencyModal({ open, onClose }: EmergencyModalProps) {
+  const { language, t } = useLanguage();
+  const contacts = getLocalizedEmergencyContacts(language);
   if (!open) return null;
 
   return (
@@ -45,14 +48,14 @@ export default function EmergencyModal({ open, onClose }: EmergencyModalProps) {
         >✕</button>
 
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: 'var(--text-dark)', marginBottom: 8 }}>
-          🚨 Emergency Contacts
+          🚨 {t('emergency.title')}
         </h2>
         <p style={{ fontSize: 14, color: 'var(--text-mid)', marginBottom: 18, lineHeight: 1.5 }}>
-          If you experience severe symptoms, contact immediately:
+          {t('emergency.subtitle')}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {EMERGENCY_CONTACTS.map(contact => (
+          {contacts.map(contact => (
             <a
               key={contact.number}
               href={contact.href}
@@ -88,7 +91,7 @@ export default function EmergencyModal({ open, onClose }: EmergencyModalProps) {
           borderRadius: 12, fontSize: 13,
           color: 'var(--rose)', lineHeight: 1.6,
         }}>
-          ⚠️ <strong>Red flags:</strong> Heavy bleeding, severe abdominal pain, no fetal movement for 12hrs, vision changes, high fever, severe headache.
+          ⚠️ <strong>{t('emergency.redFlags')}</strong>
         </div>
       </div>
     </div>

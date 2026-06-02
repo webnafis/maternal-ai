@@ -1,15 +1,17 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { getTrimester, getProgress } from "@/lib/utils";
 import {
-  getTrimester,
-  getProgress,
-  getBabyData,
-  MILESTONES,
-} from "@/lib/utils";
+  getLocalizedBabyData,
+  getLocalizedMilestones,
+  getTrimesterDisplay,
+} from "@/lib/i18n/content";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function TrackerPage() {
   const { data: session, status, update } = useSession();
+  const { language, t } = useLanguage();
   const initialized = useRef(false);
   const [week, setWeek] = useState<number | null>(null); // 👈 null instead of 1
   const [saving, setSaving] = useState(false);
@@ -356,7 +358,9 @@ export default function TrackerPage() {
 
   const trimester = getTrimester(week);
   const progress = getProgress(week);
-  const baby = getBabyData(week);
+  const baby = getLocalizedBabyData(week, language);
+  const milestones = getLocalizedMilestones(language);
+  const trimesterLabel = getTrimesterDisplay(language, trimester);
 
   const pct = progress;
   const conicGradient = `conic-gradient(var(--rose) calc(${pct}% * 3.6deg), rgba(200,169,110,0.2) 0)`;
@@ -374,11 +378,13 @@ export default function TrackerPage() {
             marginBottom: 4,
           }}
         >
-          Pregnancy Tracker
+          {t("tracker.title")}
         </h2>
         <p style={{ fontSize: 14, color: "var(--text-mid)" }}>
-          Week-by-week journey{" "}
-          {saved && <span style={{ color: "var(--sage)" }}>✓ Saved</span>}
+          {t("tracker.subtitle")}{" "}
+          {saved && (
+            <span style={{ color: "var(--sage)" }}>{t("tracker.saved")}</span>
+          )}
         </p>
       </div>
 
@@ -400,7 +406,7 @@ export default function TrackerPage() {
               color: "var(--text-dark)",
             }}
           >
-            Current Week
+            {t("tracker.currentWeek")}
           </h3>
 
           {/* Conic gradient circle */}
@@ -439,7 +445,7 @@ export default function TrackerPage() {
                 {week}
               </span>
               <span style={{ fontSize: 11, color: "var(--text-light)" }}>
-                of 40
+                {t("common.weekOf40")}
               </span>
             </div>
           </div>
@@ -457,19 +463,19 @@ export default function TrackerPage() {
               onClick={() => changeWeek(-1)}
               disabled={week <= 1 || saving}
             >
-              ← Prev
+              {t("tracker.prev")}
             </button>
             <button
               className="btn-primary"
               onClick={() => changeWeek(1)}
               disabled={week >= 40 || saving}
             >
-              Next →
+              {t("tracker.next")}
             </button>
           </div>
 
           <span className="JotnoAI-badge badge-rose">
-            {trimester} Trimester
+            {t("common.trimester", { n: trimesterLabel })}
           </span>
 
           <div
@@ -487,7 +493,7 @@ export default function TrackerPage() {
                 marginBottom: 6,
               }}
             >
-              Progress
+              {t("common.progress")}
             </div>
             <div
               style={{
@@ -516,7 +522,7 @@ export default function TrackerPage() {
                 fontWeight: 600,
               }}
             >
-              {progress}% complete
+              {t("common.percentComplete", { pct: progress })}
             </div>
           </div>
         </div>
@@ -531,7 +537,7 @@ export default function TrackerPage() {
               color: "var(--text-dark)",
             }}
           >
-            Baby Development 👶
+            {t("tracker.babyDevelopment")}
           </h3>
           <p
             style={{
@@ -554,9 +560,12 @@ export default function TrackerPage() {
             }}
           >
             {[
-              { label: "Trimester", value: trimester },
-              { label: "Week", value: `${week}/40` },
-              { label: "Days Left", value: `${(40 - week) * 7}d` },
+              { label: t("tracker.trimesterLabel"), value: trimesterLabel },
+              { label: t("tracker.weekLabel"), value: `${week}/40` },
+              {
+                label: t("tracker.daysLeftLabel"),
+                value: `${(40 - week) * 7}d`,
+              },
             ].map((item) => (
               <div
                 key={item.label}
@@ -603,10 +612,10 @@ export default function TrackerPage() {
             color: "var(--text-dark)",
           }}
         >
-          Milestone Timeline
+          {t("tracker.milestoneTimeline")}
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {MILESTONES.map((m) => {
+          {milestones.map((m) => {
             let dotClass = "milestone-upcoming";
             if (m.week < week) dotClass = "milestone-done";
             else if (Math.abs(m.week - week) <= 2)
@@ -655,7 +664,7 @@ export default function TrackerPage() {
                         : "var(--text-dark)",
                     }}
                   >
-                    Week {m.week}: {m.label}
+                    {t("tracker.weekMilestone", { week: m.week, label: m.label })}
                   </div>
                   <div
                     style={{

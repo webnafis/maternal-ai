@@ -2,18 +2,20 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import EmergencyModal from "./EmergencyModal";
+import LanguageSwitcher from "./LanguageSwitcher";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-const PAGE_TITLES: Record<string, string> = {
-  "/dashboard": "Dashboard",
-  "/tracker": "Week Tracker",
-  "/symptoms": "Symptom Checker",
-  "/nutrition": "Nutrition Guide",
-  "/mental-health": "Mental Wellness",
-  "/vaccination": "Vaccinations",
-  "/doctor-summary": "Doctor Summary",
-  "/ai-assistant": "AI Assistant",
+const PAGE_TITLE_KEYS: Record<string, string> = {
+  "/dashboard": "nav.dashboard",
+  "/tracker": "nav.tracker",
+  "/symptoms": "nav.symptoms",
+  "/nutrition": "nav.nutrition",
+  "/mental-health": "nav.mentalHealth",
+  "/vaccination": "nav.vaccination",
+  "/doctor-summary": "nav.doctorSummary",
+  "/ai-assistant": "nav.aiAssistant",
 };
 
 interface TopBarProps {
@@ -23,14 +25,26 @@ interface TopBarProps {
 }
 
 export default function TopBar({
-  userId,
   userName,
   pregnancyWeek,
 }: TopBarProps) {
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const title = PAGE_TITLES[pathname] || "JotnoAI";
+  const { t } = useLanguage();
+  const titleKey = PAGE_TITLE_KEYS[pathname];
+  const title = titleKey ? t(titleKey) : "JotnoAI";
+
+  const navLinks = [
+    ["/dashboard", "🏠", "nav.dashboard"],
+    ["/tracker", "📅", "nav.tracker"],
+    ["/symptoms", "🩺", "nav.symptoms"],
+    ["/nutrition", "🥗", "nav.nutrition"],
+    ["/mental-health", "💬", "nav.mentalHealth"],
+    ["/vaccination", "💉", "nav.vaccination"],
+    ["/doctor-summary", "📋", "nav.doctorSummary"],
+    ["/ai-assistant", "🤖", "nav.aiAssistant"],
+  ] as const;
 
   return (
     <>
@@ -49,9 +63,7 @@ export default function TopBar({
           gap: 12,
         }}
       >
-        {/* Left side: menu icon (mobile) + title */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {/* Mobile hamburger */}
           <button
             className="mobile-menu-btn"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -79,8 +91,8 @@ export default function TopBar({
           </h1>
         </div>
 
-        {/* Right side */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <LanguageSwitcher compact />
           <button
             onClick={() => setEmergencyOpen(true)}
             className="animate-pulse-red"
@@ -100,12 +112,11 @@ export default function TopBar({
               whiteSpace: "nowrap",
             }}
           >
-            🚨 <span className="emergency-text">Emergency</span>
+            🚨 <span className="emergency-text">{t("common.emergency")}</span>
           </button>
         </div>
       </header>
 
-      {/* Mobile Slide-down Menu */}
       {mobileMenuOpen && (
         <div
           className="mobile-sidebar-menu"
@@ -156,19 +167,10 @@ export default function TopBar({
                   marginTop: 2,
                 }}
               >
-                {userName} · Week {pregnancyWeek}
+                {userName} · {t("common.weekOf", { week: pregnancyWeek })}
               </div>
             </div>
-            {[
-              ["/dashboard", "🏠", "Dashboard"],
-              ["/tracker", "📅", "Week Tracker"],
-              ["/symptoms", "🩺", "Symptom Check"],
-              ["/nutrition", "🥗", "Nutrition"],
-              ["/mental-health", "💬", "Mental Health"],
-              ["/vaccination", "💉", "Vaccinations"],
-              ["/doctor-summary", "📋", "Doctor Summary"],
-              ["/ai-assistant", "🤖", "AI Assistant"],
-            ].map(([href, icon, label]) => (
+            {navLinks.map(([href, icon, key]) => (
               <Link
                 key={href}
                 href={href}
@@ -187,7 +189,7 @@ export default function TopBar({
                 }}
               >
                 <span style={{ fontSize: 20 }}>{icon}</span>
-                {label}
+                {t(key)}
               </Link>
             ))}
             <div
@@ -209,7 +211,7 @@ export default function TopBar({
                   padding: 0,
                 }}
               >
-                🚪 Sign Out
+                🚪 {t("common.signOut")}
               </button>
             </div>
           </div>

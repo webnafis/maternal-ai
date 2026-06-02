@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getSessionUserLanguage } from "@/lib/user-language";
 import Groq from "groq-sdk";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -22,10 +23,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Transcribe the audio file using Groq's Whisper instance
+    const langCtx = await getSessionUserLanguage();
+    const whisperLang = langCtx?.language === "bn" ? "bn" : "en";
+
     const transcription = await groq.audio.transcriptions.create({
       file: audioFile,
       model: "whisper-large-v3",
+      language: whisperLang,
       response_format: "json",
       temperature: 0.0,
     });

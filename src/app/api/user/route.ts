@@ -27,7 +27,8 @@ export async function PATCH(req: NextRequest) {
     await updateUserWeek(session.user.id, body.pregnancyWeek);
   }
   if (body.language !== undefined) {
-    await updateUserLanguage(session.user.id, body.language);
+    const lang = body.language === "bn" ? "bn" : "en";
+    await updateUserLanguage(session.user.id, lang);
   }
 
   // 🔔 UPDATE: Added 'await' to fetch the freshly updated user profile state

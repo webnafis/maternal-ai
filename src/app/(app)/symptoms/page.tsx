@@ -1,10 +1,17 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { SYMPTOMS } from "@/lib/utils";
+import {
+  getLocalizedSymptoms,
+  localizeSymptomTokens,
+  getSeverityLabel,
+} from "@/lib/i18n/content";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function SymptomsPage() {
   const { data: session } = useSession();
+  const { language, t } = useLanguage();
+  const symptoms = useMemo(() => getLocalizedSymptoms(language), [language]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [cachedResult, setCachedResult] = useState<{
     severity: string;
@@ -21,7 +28,7 @@ export default function SymptomsPage() {
 
   useEffect(() => {
     fetchRecentLogs();
-  }, []);
+  }, [language]);
 
   const fetchRecentLogs = async () => {
     setLogsLoading(true); // 👈 add this
@@ -45,16 +52,15 @@ export default function SymptomsPage() {
     setLoading(true);
     setSaved(false);
 
-    const selectedSymptoms = Array.from(selected).map((i) => SYMPTOMS[i].label);
-    const week = (session?.user as any)?.pregnancyWeek || 20;
+    const symptomIds = Array.from(selected).map((i) => symptoms[i].id);
+    const week = session?.user?.pregnancyWeek || 20;
 
-    // If saving, reuse the already-generated result — no re-generation
     if (save && cachedResult) {
       const res = await fetch("/api/symptoms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          symptoms: selectedSymptoms,
+          symptomIds,
           week,
           save: true,
           cachedSeverity: cachedResult.severity,
@@ -73,7 +79,7 @@ export default function SymptomsPage() {
     const res = await fetch("/api/symptoms", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ symptoms: selectedSymptoms, week, save: false }),
+      body: JSON.stringify({ symptomIds, week, save: false }),
     });
 
     if (res.ok) {
@@ -111,10 +117,10 @@ export default function SymptomsPage() {
             marginBottom: 4,
           }}
         >
-          Symptom Checker
+          {t("symptoms.title")}
         </h2>
         <p style={{ fontSize: 14, color: "var(--text-mid)" }}>
-          Select all symptoms you are experiencing
+          {t("symptoms.subtitle")}
         </p>
       </div>
 
@@ -136,7 +142,7 @@ export default function SymptomsPage() {
               color: "var(--text-dark)",
             }}
           >
-            What are you feeling? 🩺
+            {t("symptoms.whatFeeling")}
           </h3>
 
           <div
@@ -147,7 +153,7 @@ export default function SymptomsPage() {
               marginBottom: 16,
             }}
           >
-            {SYMPTOMS.map((s, i) => (
+            {symptoms.map((s, i) => (
               <button
                 key={i}
                 className={`symptom-btn  ${selected.has(i) ? "selected" : ""}`}
@@ -169,7 +175,7 @@ export default function SymptomsPage() {
               onClick={() => analyzeSymptoms(false)}
               disabled={loading}
             >
-              {loading ? "🔍 Analyzing..." : "Analyze Symptoms"}
+              {loading ? "🔍 ..." : `🔍 ${t("symptoms.analyze")}`}
             </button>
             {result && !saved && (
               <button
@@ -177,17 +183,17 @@ export default function SymptomsPage() {
                 onClick={() => analyzeSymptoms(true)}
                 disabled={loading} // ✅ already there — good
               >
-                {loading ? "💾 Saving…" : "💾 Save to Log"} {/* add this */}
+                {loading ? "💾 ..." : `💾 ${t("symptoms.saveLog")}`}
               </button>
             )}
             <button className="btn-outline" onClick={clearAll}>
-              Clear
+              {t("symptoms.clearAll")}
             </button>
           </div>
 
           {saved && (
             <div className="alert-box alert-safe" style={{ marginTop: 12 }}>
-              ✅ Symptom log saved for today.
+              {t("symptoms.logSavedToday")}
             </div>
           )}
 
@@ -198,10 +204,10 @@ export default function SymptomsPage() {
             >
               <div style={{ fontWeight: 600, marginBottom: 6 }}>
                 {result.severity === "danger"
-                  ? "🚨 Seek Immediate Help"
+                  ? t("symptoms.seekImmediate")
                   : result.severity === "warn"
-                  ? "⚠️ Monitor Closely"
-                  : "✅ Usually Normal"}
+                  ? t("symptoms.monitorClosely")
+                  : t("symptoms.usuallyNormal")}
               </div>
               <p style={{ margin: 0, lineHeight: 1.6 }}>{result.analysis}</p>
             </div>
@@ -219,7 +225,7 @@ export default function SymptomsPage() {
                 color: "var(--text-dark)",
               }}
             >
-              🚦 Symptom Guide
+              🚦 {t("symptoms.symptomGuide")}
             </h3>
             <div
               style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10 }}
@@ -228,41 +234,23 @@ export default function SymptomsPage() {
                 {
                   color: "var(--sage-pale)",
                   border: "var(--sage-light)",
-                  title: "✅ Usually Normal",
+                  title: t("symptoms.guideNormalTitle"),
                   titleColor: "var(--sage)",
-                  items: [
-                    "Mild nausea",
-                    "Light fatigue",
-                    "Breast tenderness",
-                    "Frequent urination",
-                    "Mild backache",
-                  ],
+                  items: t("symptoms.guideNormalItems").split("|"),
                 },
                 {
                   color: "#FFF8E6",
                   border: "#F0D080",
-                  title: "⚠️ Monitor Closely",
+                  title: t("symptoms.guideWarnTitle"),
                   titleColor: "#C8920A",
-                  items: [
-                    "Persistent vomiting",
-                    "Leg swelling",
-                    "Mild cramping",
-                    "Spotting",
-                    "Sleep issues",
-                  ],
+                  items: t("symptoms.guideWarnItems").split("|"),
                 },
                 {
                   color: "#FFF5F5",
                   border: "#FFB3B3",
-                  title: "🚨 Seek Help Now",
+                  title: t("symptoms.guideDangerTitle"),
                   titleColor: "var(--error)",
-                  items: [
-                    "Heavy bleeding",
-                    "Severe abdominal pain",
-                    "No fetal movement",
-                    "Vision changes",
-                    "Severe headache",
-                  ],
+                  items: t("symptoms.guideDangerItems").split("|"),
                 },
               ].map((cat) => (
                 <div
@@ -307,7 +295,7 @@ export default function SymptomsPage() {
                 color: "var(--text-dark)",
               }}
             >
-              📋 Recent Logs
+              📋 {t("symptoms.recentLogs")}
             </h3>
 
             {logsLoading ? (
@@ -359,7 +347,7 @@ export default function SymptomsPage() {
               </div>
             ) : recentLogs.length === 0 ? (
               <p style={{ fontSize: 13, color: "var(--text-light)" }}>
-                No symptom logs yet.
+                {t("symptoms.noLogsYet")}
               </p>
             ) : (
               recentLogs.map((log, i) => (
@@ -384,7 +372,13 @@ export default function SymptomsPage() {
                   >
                     {log.date}
                   </div>
-                  <div>{log.symptoms?.join(", ") || "No symptoms"}</div>
+                  <div>
+                    {log.symptoms?.length
+                      ? localizeSymptomTokens(log.symptoms, language).join(
+                          ", "
+                        )
+                      : t("symptoms.noSymptomsLog")}
+                  </div>
                   <span
                     className={`JotnoAI-badge ${
                       log.severity === "danger"
@@ -395,7 +389,7 @@ export default function SymptomsPage() {
                     }`}
                     style={{ marginTop: 4, fontSize: 10 }}
                   >
-                    {log.severity}
+                    {getSeverityLabel(language, log.severity)}
                   </span>
                 </div>
               ))

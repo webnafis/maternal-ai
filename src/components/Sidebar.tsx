@@ -3,16 +3,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { getProgress } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const NAV_ITEMS = [
-  { href: '/dashboard', icon: '🏠', label: 'Dashboard' },
-  { href: '/tracker', icon: '📅', label: 'Week Tracker' },
-  { href: '/symptoms', icon: '🩺', label: 'Symptom Check' },
-  { href: '/nutrition', icon: '🥗', label: 'Nutrition' },
-  { href: '/mental-health', icon: '💬', label: 'Mental Health' },
-  { href: '/vaccination', icon: '💉', label: 'Vaccinations' },
-  { href: '/doctor-summary', icon: '📋', label: 'Doctor Summary' },
-  { href: '/ai-assistant', icon: '🤖', label: 'AI Assistant' },
+  { href: '/dashboard', icon: '🏠', key: 'nav.dashboard' },
+  { href: '/tracker', icon: '📅', key: 'nav.tracker' },
+  { href: '/symptoms', icon: '🩺', key: 'nav.symptoms' },
+  { href: '/nutrition', icon: '🥗', key: 'nav.nutrition' },
+  { href: '/mental-health', icon: '💬', key: 'nav.mentalHealth' },
+  { href: '/vaccination', icon: '💉', key: 'nav.vaccination' },
+  { href: '/doctor-summary', icon: '📋', key: 'nav.doctorSummary' },
+  { href: '/ai-assistant', icon: '🤖', key: 'nav.aiAssistant' },
 ];
 
 interface SidebarProps {
@@ -23,6 +24,7 @@ interface SidebarProps {
 export default function Sidebar({ userName, pregnancyWeek }: SidebarProps) {
   const pathname = usePathname();
   const progress = getProgress(pregnancyWeek);
+  const { t } = useLanguage();
 
   return (
     <aside style={{
@@ -37,17 +39,15 @@ export default function Sidebar({ userName, pregnancyWeek }: SidebarProps) {
       boxShadow: '2px 0 20px rgba(44,32,24,0.06)',
       overflowY: 'auto',
     }}>
-      {/* Logo */}
       <div style={{ padding: '0 24px 28px', borderBottom: '1px solid rgba(200,169,110,0.2)' }}>
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, color: 'var(--rose)', letterSpacing: '-0.5px' }}>
           🌸 JotnoAI
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: 2 }}>
-          Maternal Health AI
+          {t('nav.tagline')}
         </div>
       </div>
 
-      {/* Nav */}
       <nav style={{ flex: 1, padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
         {NAV_ITEMS.map(item => {
           const isActive = pathname === item.href;
@@ -74,19 +74,18 @@ export default function Sidebar({ userName, pregnancyWeek }: SidebarProps) {
               <span style={{ fontSize: 18, width: 22, textAlign: 'center', filter: isActive ? 'brightness(10)' : 'none' }}>
                 {item.icon}
               </span>
-              <span>{item.label}</span>
+              <span>{t(item.key)}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* User card */}
       <div style={{ margin: '0 12px 12px', padding: 14, background: 'linear-gradient(135deg, var(--rose-pale), var(--sage-pale))', borderRadius: 14, border: '1px solid rgba(200,169,110,0.2)' }}>
         <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-dark)' }}>{userName}</div>
-        <div style={{ fontSize: 12, color: 'var(--rose)', marginTop: 2 }}>Week {pregnancyWeek} of 40</div>
+        <div style={{ fontSize: 12, color: 'var(--rose)', marginTop: 2 }}>{t('common.weekOf', { week: pregnancyWeek })}</div>
         <div style={{ marginTop: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-light)', marginBottom: 5 }}>
-            <span>Pregnancy</span><span>{progress}%</span>
+            <span>{t('common.pregnancy')}</span><span>{progress}%</span>
           </div>
           <div style={{ height: 5, background: 'rgba(200,169,110,0.2)', borderRadius: 10, overflow: 'hidden' }}>
             <div className="progress-fill-bar" style={{ width: `${progress}%` }} />
@@ -94,7 +93,6 @@ export default function Sidebar({ userName, pregnancyWeek }: SidebarProps) {
         </div>
       </div>
 
-      {/* Sign out */}
       <button
         onClick={() => signOut({ callbackUrl: '/' })}
         style={{
@@ -113,7 +111,7 @@ export default function Sidebar({ userName, pregnancyWeek }: SidebarProps) {
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#FFF5F5'; (e.currentTarget as HTMLElement).style.color = 'var(--error)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--text-light)'; }}
       >
-        🚪 Sign Out
+        🚪 {t('common.signOut')}
       </button>
     </aside>
   );

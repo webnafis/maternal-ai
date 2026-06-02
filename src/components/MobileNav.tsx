@@ -1,17 +1,19 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const MOBILE_NAV = [
-  { href: '/dashboard', icon: '🏠', label: 'Home' },
-  { href: '/tracker', icon: '📅', label: 'Tracker' },
-  { href: '/symptoms', icon: '🩺', label: 'Symptoms' },
-  { href: '/ai-assistant', icon: '🤖', label: 'AI Chat' },
-  { href: '/mental-health', icon: '💬', label: 'Wellness' },
+  { href: '/dashboard', icon: '🏠', key: 'nav.home' },
+  { href: '/tracker', icon: '📅', key: 'nav.tracker' },
+  { href: '/symptoms', icon: '🩺', key: 'nav.symptoms' },
+  { href: '/ai-assistant', icon: '🤖', key: 'nav.aiChat' },
+  { href: '/mental-health', icon: '💬', key: 'nav.wellness' },
 ];
 
 export default function MobileNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   return (
     <nav className="mobile-nav" style={{ display: 'none' }}>
@@ -34,7 +36,7 @@ export default function MobileNav() {
             }}
           >
             <span style={{ fontSize: 22 }}>{item.icon}</span>
-            <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
+            <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 400 }}>{t(item.key)}</span>
           </Link>
         );
       })}

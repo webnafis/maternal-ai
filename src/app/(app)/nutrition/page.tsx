@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { getTrimester, NUTRITION_DATA } from "@/lib/utils";
+import { getTrimester } from "@/lib/utils";
+import { getLocalizedNutrition, getTrimesterDisplay } from "@/lib/i18n/content";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Nutrient {
   name: string;
@@ -17,7 +19,8 @@ interface NutritionPlan {
 }
 
 export default function NutritionPage() {
-  const { data: session, status } = useSession(); // 👈 add status
+  const { data: session, status } = useSession();
+  const { language, t } = useLanguage();
   const [week, setWeek] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -31,7 +34,10 @@ export default function NutritionPage() {
   }, [status]);
 
   const trimester = getTrimester(week);
-  const plan: NutritionPlan = NUTRITION_DATA[trimester];
+  const plan: NutritionPlan =
+    getLocalizedNutrition(language, trimester) ||
+    getLocalizedNutrition("en", trimester)!;
+  const trimesterLabel = getTrimesterDisplay(language, trimester);
 
   // Beautiful pulse loader
   if (loading || status === "loading") {
@@ -327,14 +333,14 @@ export default function NutritionPage() {
               marginBottom: 4,
             }}
           >
-            Prenatal Nutrition Guide
+            {t("nutrition.title")}
           </h2>
           <p style={{ fontSize: 14, color: "var(--text-mid)" }}>
-            Tailored dietary recommendations for your health in **Week {week}**
+            {t("nutrition.subtitle", { week })}
           </p>
         </div>
         <span className="JotnoAI-badge badge-gold">
-          {trimester} Trimester Diet Plan
+          {t("nutrition.trimesterPlan", { n: trimesterLabel })}
         </span>
       </div>
 
@@ -364,13 +370,12 @@ export default function NutritionPage() {
               color: "var(--text-dark)",
             }}
           >
-            🎯 Target Daily Macro & Micronutrients
+            {t("nutrition.nutrientsTitle")}
           </h3>
           <p
             style={{ fontSize: 13, color: "var(--text-mid)", marginBottom: 20 }}
           >
-            Essential element requirements magnified during this specific
-            developmental segment.
+            {t("nutrition.nutrientsDesc")}
           </p>
 
           <div
@@ -398,7 +403,7 @@ export default function NutritionPage() {
                     {nutrient.name}
                   </span>
                   <span style={{ color: "var(--text-mid)" }}>
-                    {nutrient.pct}% Recommended
+                    {t("nutrition.percentRecommended", { pct: nutrient.pct })}
                   </span>
                 </div>
                 {/* Progress bar wrap container */}
@@ -436,13 +441,12 @@ export default function NutritionPage() {
               color: "var(--text-dark)",
             }}
           >
-            💊 Vital Supplements & Dosages
+            {t("nutrition.suppsTitle")}
           </h3>
           <p
             style={{ fontSize: 13, color: "var(--text-mid)", marginBottom: 16 }}
           >
-            Consult your healthcare provider before shifting current vitamin
-            schedules.
+            {t("nutrition.suppsDesc")}
           </p>
 
           <div
@@ -490,13 +494,12 @@ export default function NutritionPage() {
               color: "var(--sage)",
             }}
           >
-            🟢 Highly Recommended Foods
+            {t("nutrition.safeTitle")}
           </h3>
           <p
             style={{ fontSize: 13, color: "var(--text-mid)", marginBottom: 14 }}
           >
-            Nutrient-dense options supporting rapid embryonic and cellular
-            tissue expansion.
+            {t("nutrition.safeDesc")}
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -533,13 +536,12 @@ export default function NutritionPage() {
               color: "var(--error)",
             }}
           >
-            🛑 Foods strictly to Avoid
+            {t("nutrition.avoidTitle")}
           </h3>
           <p
             style={{ fontSize: 13, color: "var(--text-mid)", marginBottom: 14 }}
           >
-            Potential bacterial vectors or chemical catalysts presenting
-            prenatal complications risk.
+            {t("nutrition.avoidDesc")}
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -581,12 +583,9 @@ export default function NutritionPage() {
         <span style={{ fontSize: 24 }}>💧</span>
         <div>
           <strong style={{ color: "#3B6B50" }}>
-            Hydration Protocol Baseline Reminder:
+            {t("nutrition.hydrationTitle")}
           </strong>{" "}
-          Aim to ingest at least 2.5 to 3 liters of purified water daily.
-          Adequate hydration balances amniotic volumes and reduces common
-          cardiovascular stress indicators like sudden swelling or acute
-          maternal headaches.
+          {t("nutrition.hydrationBody")}
         </div>
       </div>
     </div>

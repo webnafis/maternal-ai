@@ -1,35 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
-
-/* ── Constants ── */
-const MOODS = [
-  { emoji: "😄", label: "Great", score: 5 },
-  { emoji: "🙂", label: "Good", score: 4 },
-  { emoji: "😐", label: "Okay", score: 3 },
-  { emoji: "😔", label: "Low", score: 2 },
-  { emoji: "😰", label: "Anxious", score: 1 },
-];
-
-const PHQ_QUESTIONS = [
-  "Little interest or pleasure in doing things?",
-  "Feeling down, depressed, or hopeless?",
-  "Trouble sleeping or sleeping too much?",
-  "Feeling tired or having little energy?",
-  "Feeling bad about yourself?",
-];
-
-const PHQ_OPTIONS = ["Never", "Sometimes", "Often", "Always"];
-
-const WELLNESS_TIPS = [
-  "🧘 Practice 10 minutes of deep breathing daily",
-  "🛁 Take a warm bath to ease tension",
-  "🤝 Talk to a trusted friend or partner",
-  "🚶 A short walk outside can boost mood",
-  "📱 Limit social media to 30 mins/day",
-  "💤 Aim for 8–9 hours of sleep",
-  "🎵 Listen to calming music or nature sounds",
-];
+import { getLocalizedMoods, getLocalizedMoodLabel } from "@/lib/i18n/content";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 /* ── Types ── */
 interface MoodEntry {
@@ -46,7 +19,29 @@ type AlertType = "safe" | "warn" | "danger";
 /* ── Component ── */
 export default function MentalHealthPage() {
   const { data: session, status } = useSession();
-  const week = (session?.user as any)?.pregnancyWeek ?? 1;
+  const { language, t } = useLanguage();
+  const MOODS = useMemo(() => getLocalizedMoods(language), [language]);
+  const wellnessTips = useMemo(
+    () =>
+      [1, 2, 3, 4, 5, 6, 7].map((i) =>
+        t(`mentalHealth.wellnessTip${i}` as "mentalHealth.wellnessTip1")
+      ),
+    [t, language]
+  );
+  const phqQuestions = useMemo(
+    () => [1, 2, 3, 4, 5].map((i) => t(`mentalHealth.phqQ${i}` as "mentalHealth.phqQ1")),
+    [t, language]
+  );
+  const phqOptions = useMemo(
+    () => [
+      t("mentalHealth.phqNever"),
+      t("mentalHealth.phqSometimes"),
+      t("mentalHealth.phqOften"),
+      t("mentalHealth.phqAlways"),
+    ],
+    [t, language]
+  );
+  const week = session?.user?.pregnancyWeek ?? 1;
 
   const [selectedMood, setSelectedMood] = useState<(typeof MOODS)[0] | null>(
     null
@@ -71,7 +66,7 @@ export default function MentalHealthPage() {
   /* ── Load history ── */
   useEffect(() => {
     loadHistory();
-  }, []);
+  }, [language]);
 
   async function loadHistory() {
     try {
@@ -116,12 +111,15 @@ export default function MentalHealthPage() {
           : selectedMood.score >= 3
           ? "warn"
           : "danger";
-      setMoodFeedback({ type, text: data.aiFeedback ?? "✅ Mood saved!" });
+      setMoodFeedback({
+        type,
+        text: data.aiFeedback ?? t("mentalHealth.moodSaved"),
+      });
       loadHistory();
     } catch {
       setMoodFeedback({
         type: "warn",
-        text: "Could not save. Please try again.",
+        text: t("mentalHealth.saveFailed"),
       });
     }
     setSaving(false);
@@ -138,7 +136,7 @@ export default function MentalHealthPage() {
     if (phqAnswers.some((a) => a === -1)) {
       setPhqResult({
         type: "warn",
-        text: "⚠️ Please answer all 5 questions for an accurate assessment.",
+        text: t("mentalHealth.phqAnswerAll"),
       });
       return;
     }
@@ -146,20 +144,11 @@ export default function MentalHealthPage() {
 
     let result: { type: AlertType; text: string };
     if (total <= 4) {
-      result = {
-        type: "safe",
-        text: "✅ Low risk. Your responses suggest minimal depression symptoms. Keep up your self-care routine!",
-      };
+      result = { type: "safe", text: t("mentalHealth.phqLow") };
     } else if (total <= 9) {
-      result = {
-        type: "warn",
-        text: "⚠️ Mild symptoms detected. Consider talking to your doctor at your next visit. You're not alone.",
-      };
+      result = { type: "warn", text: t("mentalHealth.phqMild") };
     } else {
-      result = {
-        type: "danger",
-        text: "🚨 Please speak to your healthcare provider soon. Your responses suggest you may benefit from professional support. This is common and treatable.",
-      };
+      result = { type: "danger", text: t("mentalHealth.phqHigh") };
     }
     setPhqResult(result);
 
@@ -440,7 +429,7 @@ export default function MentalHealthPage() {
           </div>
 
           {/* 5 PHQ question blocks */}
-          {PHQ_QUESTIONS.map((_, qi) => (
+          {phqQuestions.map((_, qi) => (
             <div key={qi} style={{ marginBottom: 18 }}>
               {/* Question text */}
               <div
@@ -455,7 +444,7 @@ export default function MentalHealthPage() {
               />
               {/* 4 radio option pills */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                {PHQ_OPTIONS.map((opt, oi) => (
+                {phqOptions.map((opt, oi) => (
                   <div
                     key={oi}
                     style={{
@@ -524,10 +513,10 @@ export default function MentalHealthPage() {
             marginBottom: 4,
           }}
         >
-          Mental Wellness
+          {t("mentalHealth.title")}
         </h2>
         <p style={{ fontSize: 14, color: "var(--text-light)" }}>
-          Your emotional health matters
+          {t("mentalHealth.subtitle")}
         </p>
       </div>
 
@@ -541,7 +530,7 @@ export default function MentalHealthPage() {
             color: "var(--text-dark)",
           }}
         >
-          How are you feeling today?
+          {t("mentalHealth.howFeeling")}
         </h3>
 
         {/* Mood grid */}
@@ -591,7 +580,7 @@ export default function MentalHealthPage() {
         <textarea
           value={journal}
           onChange={(e) => setJournal(e.target.value)}
-          placeholder="Write freely… What's on your mind today? How did you sleep? Any concerns?"
+          placeholder={t("mentalHealth.journalPlaceholder")}
           style={{
             width: "100%",
             padding: 14,
@@ -613,10 +602,10 @@ export default function MentalHealthPage() {
 
         <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
           <button className="btn-primary" onClick={saveMood} disabled={saving}>
-            {saving ? "💾 Saving…" : "Save Today's Entry 💾"}
+            {saving ? `💾 ${t("common.saving")}` : t("mentalHealth.saveEntry")}
           </button>
           <button className="btn-outline" onClick={clearMood}>
-            Clear
+            {t("common.clear")}
           </button>
         </div>
 
@@ -649,7 +638,7 @@ export default function MentalHealthPage() {
               color: "var(--text-dark)",
             }}
           >
-            📅 Mood History
+            {t("mentalHealth.moodHistory")}
           </h3>
 
           {/* ── INLINE HISTORY SKELETON ── */}
@@ -690,7 +679,7 @@ export default function MentalHealthPage() {
             </>
           ) : moodHistory.length === 0 ? (
             <p style={{ fontSize: 13, color: "var(--text-light)" }}>
-              No entries yet. Start logging your mood!
+              {t("mentalHealth.noMoodYet")}
             </p>
           ) : (
             <>
@@ -736,7 +725,7 @@ export default function MentalHealthPage() {
                   className="alert-box alert-safe"
                   style={{ display: "block", fontSize: 13 }}
                 >
-                  💙 <strong>Latest AI insight:</strong>{" "}
+                  💙 <strong>{t("mentalHealth.latestInsight")}</strong>{" "}
                   {moodHistory[0].ai_feedback}
                 </div>
               )}
@@ -754,10 +743,10 @@ export default function MentalHealthPage() {
               color: "var(--text-dark)",
             }}
           >
-            🧘 Wellness Tips
+            {t("mentalHealth.wellnessTips")}
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-            {WELLNESS_TIPS.map((tip, i) => (
+            {wellnessTips.map((tip, i) => (
               <p
                 key={i}
                 style={{
@@ -789,7 +778,7 @@ export default function MentalHealthPage() {
             color: "var(--text-dark)",
           }}
         >
-          💙 Postpartum Depression Screening
+          {t("mentalHealth.phqTitle")}
         </h3>
         <p
           style={{
@@ -799,11 +788,10 @@ export default function MentalHealthPage() {
             lineHeight: 1.6,
           }}
         >
-          Regular screening helps catch issues early. Based on the Edinburgh
-          Postnatal Depression Scale (EPDS).
+          {t("mentalHealth.phqDesc")}
         </p>
 
-        {PHQ_QUESTIONS.map((q, i) => (
+        {phqQuestions.map((q, i) => (
           <div key={i} style={{ marginBottom: 14 }}>
             <p
               style={{
@@ -816,7 +804,7 @@ export default function MentalHealthPage() {
               {i + 1}. {q}
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-              {PHQ_OPTIONS.map((opt, j) => (
+              {phqOptions.map((opt, j) => (
                 <label
                   key={j}
                   style={{
@@ -856,7 +844,7 @@ export default function MentalHealthPage() {
           style={{ marginTop: 6 }}
           onClick={assessPHQ}
         >
-          Get My Assessment
+          {t("mentalHealth.getAssessment")}
         </button>
 
         {phqResult && (
@@ -928,7 +916,11 @@ export default function MentalHealthPage() {
                   marginBottom: 2,
                 }}
               >
-                {selectedEntry.mood_label}
+                {getLocalizedMoodLabel(
+                  selectedEntry.mood_label,
+                  selectedEntry.mood_score,
+                  language
+                )}
               </p>
               <p style={{ fontSize: 12, color: "var(--text-light)" }}>
                 {selectedEntry.date}
@@ -948,7 +940,7 @@ export default function MentalHealthPage() {
                     marginBottom: 6,
                   }}
                 >
-                  Your note
+                  {t("mentalHealth.yourNote")}
                 </p>
                 <p
                   style={{
@@ -973,7 +965,7 @@ export default function MentalHealthPage() {
                   textAlign: "center",
                 }}
               >
-                No journal note for this entry.
+                {t("mentalHealth.noJournal")}
               </p>
             )}
 
@@ -983,7 +975,8 @@ export default function MentalHealthPage() {
                 className="alert-box alert-safe"
                 style={{ display: "block", fontSize: 13, marginBottom: 0 }}
               >
-                💙 <strong>AI insight:</strong> {selectedEntry.ai_feedback}
+                💙 <strong>{t("mentalHealth.aiInsightLabel")}</strong>{" "}
+                {selectedEntry.ai_feedback}
               </div>
             )}
           </div>

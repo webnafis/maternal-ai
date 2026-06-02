@@ -1,11 +1,18 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import type { AppLanguage } from "@/lib/i18n/types";
+import {
+  localizeSymptomTokens,
+  getLocalizedMoodLabel,
+} from "@/lib/i18n/content";
 
 interface MoodEntry {
   date: string;
   emoji: string;
   label: string;
+  score?: number | null;
 }
 
 interface SymptomEntry {
@@ -27,9 +34,9 @@ interface SummaryData {
   generatedAt: string;
 }
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string, lang: AppLanguage) {
   try {
-    return new Date(dateStr).toLocaleDateString("en-GB", {
+    return new Date(dateStr).toLocaleDateString(lang === "bn" ? "bn-BD" : "en-GB", {
       day: "2-digit",
       month: "short",
     });
@@ -40,28 +47,31 @@ function formatDate(dateStr: string) {
 
 export default function DoctorSummaryPage() {
   const { data: session } = useSession();
+  const { language, t } = useLanguage();
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
 
-  useEffect(() => {
-    fetchSummary();
-  }, []);
-
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const res = await fetch("/api/doctor-summary");
-      if (!res.ok) throw new Error("Failed to load clinical report summary.");
+      if (!res.ok) throw new Error(t("doctorSummary.loadFailed"));
       const data = await res.json();
       setSummary(data.summary);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : t("common.somethingWrong")
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [t, language]);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   const handlePrint = () => {
     window.print();
@@ -93,11 +103,10 @@ export default function DoctorSummaryPage() {
               marginBottom: 4,
             }}
           >
-            Doctor Visit Summary
+            {t("doctorSummary.title")}
           </h2>
           <p style={{ fontSize: 14, color: "var(--text-mid)" }}>
-            Exportable report containing recent health records and personalized
-            clinical advice.
+            {t("doctorSummary.subtitle")}
           </p>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
@@ -106,14 +115,14 @@ export default function DoctorSummaryPage() {
             onClick={fetchSummary}
             disabled={loading}
           >
-            🔄 Refresh
+            🔄 {t("common.refresh")}
           </button>
           <button
             className="btn-primary"
             onClick={handlePrint}
             disabled={loading || !!error || !summary}
           >
-            🖨️ Print / Save PDF
+            {t("doctorSummary.print")}
           </button>
         </div>
       </div>
@@ -375,7 +384,7 @@ export default function DoctorSummaryPage() {
                   animation: "pulse 1.5s ease-in-out infinite",
                 }}
               >
-                Compiling personalized clinical insights…
+                {t("doctorSummary.drafting")}
               </span>
             </div>
           </div>
@@ -443,7 +452,7 @@ export default function DoctorSummaryPage() {
 
       {error && (
         <div className="alert-box alert-danger">
-          ⚠️ {error}. Please try again later.
+          ⚠️ {error}. {t("common.tryAgain")}
         </div>
       )}
 
@@ -466,7 +475,7 @@ export default function DoctorSummaryPage() {
               className="JotnoAI-badge badge-rose"
               style={{ fontSize: 14, padding: "6px 14px" }}
             >
-              🌸 JotnoAI Report
+              {t("doctorSummary.reportBadge")}
             </span>
             <div
               style={{
@@ -475,7 +484,7 @@ export default function DoctorSummaryPage() {
                 marginTop: 4,
               }}
             >
-              Generated: {summary.generatedAt}
+              {t("doctorSummary.generated")}: {summary.generatedAt}
             </div>
           </div>
 
@@ -487,7 +496,7 @@ export default function DoctorSummaryPage() {
               color: "var(--text-dark)",
             }}
           >
-            Prenatal Health Record
+            {t("doctorSummary.prenatalRecord")}
           </h3>
 
           {/* ── Static profile fields ── */}
@@ -500,11 +509,11 @@ export default function DoctorSummaryPage() {
             }}
           >
             {[
-              { label: "Patient Name", value: summary.patient },
-              { label: "Gestational Timeline", value: summary.week },
-              { label: "Pregnancy Progress", value: summary.progress },
-              { label: "Estimated Due Date (EDD)", value: summary.dueDate },
-              { label: "Immunization Record", value: summary.vaccinations },
+              { label: t("doctorSummary.patientName"), value: summary.patient },
+              { label: t("doctorSummary.gestationalTimeline"), value: summary.week },
+              { label: t("doctorSummary.pregnancyProgress"), value: summary.progress },
+              { label: t("doctorSummary.estimatedDueDate"), value: summary.dueDate },
+              { label: t("doctorSummary.immunizationRecord"), value: summary.vaccinations },
             ].map((field, idx) => (
               <div className="summary-field" key={idx}>
                 <div className="summary-label">{field.label}</div>
@@ -524,7 +533,7 @@ export default function DoctorSummaryPage() {
 
           {/* ── 7-Day Mood Log ── */}
           <div className="summary-field" style={{ marginTop: 12 }}>
-            <div className="summary-label">Mood Log — Last 7 Days</div>
+            <div className="summary-label">{t("doctorSummary.moodLog7")}</div>
             <div
               style={{
                 fontSize: 14,
@@ -534,16 +543,19 @@ export default function DoctorSummaryPage() {
               }}
             >
               {summary.moodLog.length === 0
-                ? "No mood entries recorded in the past 7 days."
+                ? t("doctorSummary.noMood7")
                 : summary.moodLog
-                    .map((e) => `${e.emoji} ${e.label} (${formatDate(e.date)})`)
+                    .map(
+                      (e) =>
+                        `${e.emoji} ${getLocalizedMoodLabel(e.label, e.score ?? null, language)} (${formatDate(e.date, language)})`
+                    )
                     .join("  ·  ")}
             </div>
           </div>
 
           {/* ── Symptom Log ── */}
           <div className="summary-field" style={{ marginTop: 12 }}>
-            <div className="summary-label">Symptom Log — Last 7 Days</div>
+            <div className="summary-label">{t("doctorSummary.symptomLog7")}</div>
             <div
               style={{
                 fontSize: 14,
@@ -556,7 +568,7 @@ export default function DoctorSummaryPage() {
               }}
             >
               {summary.symptomLog.length === 0
-                ? "No symptoms reported in the past 7 days."
+                ? t("doctorSummary.noSymptoms7")
                 : summary.symptomLog.map((entry, idx) => (
                     <span key={idx}>
                       <span
@@ -565,9 +577,11 @@ export default function DoctorSummaryPage() {
                           fontWeight: 400,
                         }}
                       >
-                        {formatDate(entry.date)}:
+                        {formatDate(entry.date, language)}:
                       </span>{" "}
-                      {entry.symptoms.join(", ")}
+                      {localizeSymptomTokens(entry.symptoms, language).join(
+                        ", "
+                      )}
                     </span>
                   ))}
             </div>
@@ -591,7 +605,7 @@ export default function DoctorSummaryPage() {
                 fontWeight: 700,
               }}
             >
-              ✨ AI Personalized Consultation Insights
+              {t("doctorSummary.aiInsightsTitle")}
             </div>
             <div
               style={{
@@ -614,7 +628,7 @@ export default function DoctorSummaryPage() {
 
           {/* ── Next Appointment ── */}
           <div style={{ marginTop: 12 }} className="alert-box alert-safe">
-            <strong>📅 Routine Clinic Protocol:</strong>{" "}
+            <strong>{t("doctorSummary.routineClinic")}</strong>{" "}
             {summary.nextAppointment}.
           </div>
 
@@ -629,11 +643,7 @@ export default function DoctorSummaryPage() {
               paddingTop: 16,
             }}
           >
-            ⚠️ This summary is generated for diagnostic preparatory convenience.
-            Medical adjustments or care tracking evaluations should strictly
-            always proceed alongside a certified clinician. References map
-            criteria guidelines of the World Health Organization (WHO) and
-            Bangladesh DGHS Maternal Protocols.
+            ⚠️ {t("doctorSummary.disclaimer")}
           </div>
         </div>
       )}

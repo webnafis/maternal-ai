@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getVaccinationRecords, upsertVaccination } from "@/lib/db";
-import { VACCINES } from "@/lib/utils";
+import { getUserById } from "@/lib/db";
+import { getLocalizedVaccines } from "@/lib/i18n/content";
+import { normalizeLanguage } from "@/lib/i18n/types";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -14,12 +16,13 @@ export async function GET(req: NextRequest) {
     ? parseInt(weekParam)
     : (session.user as any).pregnancyWeek || 1;
 
+  const user = await getUserById(session.user.id);
+  const lang = normalizeLanguage(user?.language);
+  const VACCINES = getLocalizedVaccines(lang);
+
   const records = await getVaccinationRecords(session.user.id);
   const recordMap = new Map(records.map((r) => [r.vaccine_id, r.status]));
 
-  // Insert default records for any vaccines not yet in the database.
-  // Default: due if currentWeek >= eligibleFromWeek, else upcoming.
-  // "done" is never a default — only the user can mark something done.
   const missingVaccines = VACCINES.filter((v) => !recordMap.has(v.id));
   if (missingVaccines.length > 0) {
     await Promise.all(

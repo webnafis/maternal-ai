@@ -1,85 +1,84 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { getUserByName, createUser, updateUserWeek, getUserById } from "./db";
-import { v4 as uuidv4 } from "uuid";
-import { format, addWeeks } from "date-fns";
+import { getUserByName, getUserById, updateUserLanguage } from "./db";
+import { normalizeLanguage } from "@/lib/i18n/types";
+import { verifyPassword } from "./password";
 
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "JotnoAI",
       credentials: {
-        name: { label: "Name", type: "text" },
-        pregnancyWeek: { label: "Pregnancy Week", type: "number" },
+        name: { label: "Username", type: "text" },
+        password: { label: "Password", type: "password" },
+        language: { label: "Language", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.name || !credentials?.pregnancyWeek) return null;
+        if (!credentials?.name || !credentials?.password) return null;
 
         const name = credentials.name.trim();
-        const week = parseInt(credentials.pregnancyWeek);
+        const user = await getUserByName(name);
 
-        if (!name || isNaN(week) || week < 1 || week > 40) return null;
+        if (!user?.password_hash) return null;
 
-        let user = await getUserByName(name);
+        const valid = await verifyPassword(
+          credentials.password,
+          user.password_hash
+        );
+        if (!valid) return null;
 
-        if (!user) {
-          // Create new account
-          const dueDate = format(addWeeks(new Date(), 40 - week), "yyyy-MM-dd");
-
-          const newUser = await createUser(uuidv4(), name, week, dueDate);
-          if (!newUser) return null;
-          user = newUser;
-        } else {
-          // User exists — log them in (week may have changed, update it)
-          if (user.pregnancy_week !== week) {
-            await updateUserWeek(user.id, week);
-            user.pregnancy_week = week;
+        if (credentials.language) {
+          const lang = normalizeLanguage(credentials.language);
+          if (lang !== normalizeLanguage(user.language)) {
+            await updateUserLanguage(user.id, lang);
+            user.language = lang;
           }
         }
 
-        // This object matches the extended 'User' interface from next-auth.d.ts
         return {
           id: user.id,
           name: user.name,
           pregnancyWeek: user.pregnancy_week,
           dueDate: user.due_date,
-          language: user.language,
+          language: normalizeLanguage(user.language),
         };
       },
     }),
   ],
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
-    // 🔔 STEP 2 UPDATE: Cleanly map the token parameters leveraging next-auth typing extensions
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.pregnancyWeek = user.pregnancyWeek;
-        token.dueDate = (user as any).dueDate; // Kept custom mapping properties safe
-        token.language = (user as any).language;
+        token.dueDate = user.dueDate;
+        token.language = user.language;
+      }
+      if (trigger === "update" && session?.language) {
+        token.language = session.language === "bn" ? "bn" : "en";
       }
       return token;
     },
-    // 🔔 STEP 2 UPDATE: Firm typing rules mapping from JWT token right back into layout layouts
     async session({ session, token }) {
       if (token?.id && session.user) {
         const freshUser = await getUserById(token.id as string);
         if (freshUser) {
           session.user.id = freshUser.id;
           session.user.pregnancyWeek = freshUser.pregnancy_week;
-          (session.user as any).dueDate = freshUser.due_date;
-          (session.user as any).language = freshUser.language;
+          session.user.dueDate = freshUser.due_date;
+          session.user.language =
+            freshUser.language === "bn" ? "bn" : "en";
         }
       }
       return session;
     },
   },
   pages: {
-    signIn: "/",
-    error: "/",
+    signIn: "/login",
+    error: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
