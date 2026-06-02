@@ -1,6 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { getUserByName, createUser, updateUserWeek } from "./db";
+import { getUserByName, createUser, updateUserWeek, getUserById } from "./db";
 import { v4 as uuidv4 } from "uuid";
 import { format, addWeeks } from "date-fns";
 
@@ -65,11 +65,14 @@ export const authOptions: NextAuthOptions = {
     },
     // 🔔 STEP 2 UPDATE: Firm typing rules mapping from JWT token right back into layout layouts
     async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.id;
-        session.user.pregnancyWeek = token.pregnancyWeek;
-        (session.user as any).dueDate = token.dueDate;
-        (session.user as any).language = token.language;
+      if (token?.id && session.user) {
+        const freshUser = await getUserById(token.id as string);
+        if (freshUser) {
+          session.user.id = freshUser.id;
+          session.user.pregnancyWeek = freshUser.pregnancy_week;
+          (session.user as any).dueDate = freshUser.due_date;
+          (session.user as any).language = freshUser.language;
+        }
       }
       return session;
     },

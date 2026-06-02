@@ -148,9 +148,14 @@ export async function upsertChecklist(
 }
 
 // ─── Symptom Operations ─────────────────────────────────────────────────────
+// In db.ts — replace getSymptomLogsForUser
 export async function getSymptomLogsForUser(userId: string, limit = 30) {
-  const rows =
-    await sql`SELECT * FROM symptom_logs WHERE user_id = ${userId} ORDER BY date DESC LIMIT ${limit}`;
+  const rows = await sql`
+    SELECT * FROM symptom_logs
+    WHERE user_id = ${userId}
+    ORDER BY date DESC, created_at DESC
+    LIMIT ${limit}
+  `;
   return rows.map((r) => ({
     ...r,
     symptoms: JSON.parse(r.symptoms as unknown as string),

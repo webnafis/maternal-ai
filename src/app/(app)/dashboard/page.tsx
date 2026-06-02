@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   getTrimester,
   getProgress,
@@ -13,7 +15,7 @@ import {
 } from "@/lib/utils";
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [checklist, setChecklist] = useState<boolean[]>(
     CHECKLIST_ITEMS.map(() => false)
@@ -51,6 +53,93 @@ export default function DashboardPage() {
     });
   };
 
+  // Replace the existing loader block
+  if (status === "loading" || week === null) {
+    return (
+      <div style={{ padding: "24px", maxWidth: 1100, margin: "0 auto" }}>
+        {/* Header skeleton */}
+        <div style={{ marginBottom: 24 }}>
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+
+        {/* Stats skeleton */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+            gap: 16,
+            marginBottom: 20,
+          }}
+        >
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              style={{
+                background: "var(--warm-white)",
+                borderRadius: 18,
+                padding: "20px",
+                boxShadow: "var(--shadow)",
+                border: "1px solid rgba(200,169,110,0.1)",
+                textAlign: "center",
+              }}
+            >
+              <Skeleton className="h-7 w-7 rounded-full mx-auto mb-3" />
+              <Skeleton className="h-7 w-16 mx-auto mb-2" />
+              <Skeleton className="h-3 w-24 mx-auto" />
+            </div>
+          ))}
+        </div>
+
+        {/* Focus + Checklist skeleton */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: 20,
+            marginBottom: 20,
+          }}
+        >
+          {/* Week Focus skeleton */}
+          <div className="JotnoAI-card">
+            <Skeleton className="h-5 w-48 mb-4" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+
+          {/* Checklist skeleton */}
+          <div className="JotnoAI-card">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 14,
+              }}
+            >
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-5 w-10 rounded-full" />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions skeleton */}
+        <div className="JotnoAI-card">
+          <Skeleton className="h-5 w-36 mb-4" />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-9 w-36 rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
   const trimester = getTrimester(week);
   const progress = getProgress(week);
   const daysLeft = getDaysLeft(week);

@@ -37,6 +37,7 @@ interface MoodEntry {
   mood_emoji: string;
   mood_label: string;
   mood_score: number;
+  journal?: string;
   ai_feedback?: string;
 }
 
@@ -65,6 +66,7 @@ export default function MentalHealthPage() {
 
   const [moodHistory, setMoodHistory] = useState<MoodEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [selectedEntry, setSelectedEntry] = useState<MoodEntry | null>(null);
 
   /* ── Load history ── */
   useEffect(() => {
@@ -161,18 +163,12 @@ export default function MentalHealthPage() {
     }
     setPhqResult(result);
 
-    // Optionally save the PHQ score alongside today's mood
+    // Only send PHQ score — no mood fields at all
     try {
-      await fetch("/api/mood", {
+      await fetch("/api/mood/phq", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          moodEmoji: selectedMood?.emoji ?? "😐",
-          moodLabel: selectedMood?.label ?? "Okay",
-          moodScore: selectedMood?.score ?? 3,
-          phqScore: total,
-          week,
-        }),
+        body: JSON.stringify({ phqScore: total }),
       });
     } catch {
       /* non-blocking */
@@ -311,6 +307,7 @@ export default function MentalHealthPage() {
         }}
       >
         {/* History */}
+        {/* History */}
         <div className="JotnoAI-card">
           <h3
             style={{
@@ -342,8 +339,9 @@ export default function MentalHealthPage() {
                   .reverse()
                   .slice(0, 10)
                   .map((entry, i) => (
-                    <div
+                    <button
                       key={i}
+                      onClick={() => setSelectedEntry(entry)}
                       style={{
                         padding: "5px 12px",
                         borderRadius: 20,
@@ -351,22 +349,33 @@ export default function MentalHealthPage() {
                         fontSize: 12,
                         color: "var(--text-mid)",
                         border: "1px solid rgba(200,169,110,0.15)",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
                       }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.borderColor = "var(--rose)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.borderColor =
+                          "rgba(200,169,110,0.15)")
+                      }
                     >
                       {entry.mood_emoji} {entry.date}
-                    </div>
+                    </button>
                   ))}
               </div>
-              {/* Latest AI feedback */}
-              {moodHistory[moodHistory.length - 1]?.ai_feedback && (
-                <div
-                  className="alert-box alert-safe"
-                  style={{ display: "block", fontSize: 13 }}
-                >
-                  💙 <strong>Latest AI insight:</strong>{" "}
-                  {moodHistory[moodHistory.length - 1].ai_feedback}
-                </div>
-              )}
+              {
+                // ✅ Correct — index 0 is the most recent entry
+                moodHistory[0]?.ai_feedback && (
+                  <div
+                    className="alert-box alert-safe"
+                    style={{ display: "block", fontSize: 13 }}
+                  >
+                    💙 <strong>Latest AI insight:</strong>{" "}
+                    {moodHistory[0].ai_feedback}
+                  </div>
+                )
+              }
             </>
           )}
         </div>
@@ -495,6 +504,127 @@ export default function MentalHealthPage() {
           </div>
         )}
       </div>
+
+      {/* ── Mood Detail Modal ── */}
+      {selectedEntry && (
+        <div
+          onClick={() => setSelectedEntry(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            backdropFilter: "blur(4px)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "var(--white, #fff)",
+              borderRadius: 20,
+              padding: 28,
+              maxWidth: 460,
+              width: "100%",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+              position: "relative",
+            }}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedEntry(null)}
+              style={{
+                position: "absolute",
+                top: 14,
+                right: 16,
+                background: "none",
+                border: "none",
+                fontSize: 20,
+                cursor: "pointer",
+                color: "var(--text-light)",
+                lineHeight: 1,
+              }}
+            >
+              ✕
+            </button>
+
+            {/* Emoji + date */}
+            <div style={{ textAlign: "center", marginBottom: 18 }}>
+              <div style={{ fontSize: 52, marginBottom: 6 }}>
+                {selectedEntry.mood_emoji}
+              </div>
+              <p
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: 18,
+                  color: "var(--text-dark)",
+                  marginBottom: 2,
+                }}
+              >
+                {selectedEntry.mood_label}
+              </p>
+              <p style={{ fontSize: 12, color: "var(--text-light)" }}>
+                {selectedEntry.date}
+              </p>
+            </div>
+
+            {/* Journal */}
+            {selectedEntry.journal ? (
+              <div style={{ marginBottom: 16 }}>
+                <p
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "var(--text-light)",
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                    marginBottom: 6,
+                  }}
+                >
+                  Your note
+                </p>
+                <p
+                  style={{
+                    fontSize: 14,
+                    color: "var(--text-mid)",
+                    lineHeight: 1.65,
+                    background: "var(--cream)",
+                    borderRadius: 10,
+                    padding: "10px 14px",
+                  }}
+                >
+                  {selectedEntry.journal}
+                </p>
+              </div>
+            ) : (
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "var(--text-light)",
+                  fontStyle: "italic",
+                  marginBottom: 16,
+                  textAlign: "center",
+                }}
+              >
+                No journal note for this entry.
+              </p>
+            )}
+
+            {/* AI feedback */}
+            {selectedEntry.ai_feedback && (
+              <div
+                className="alert-box alert-safe"
+                style={{ display: "block", fontSize: 13, marginBottom: 0 }}
+              >
+                💙 <strong>AI insight:</strong> {selectedEntry.ai_feedback}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

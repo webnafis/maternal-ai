@@ -7,9 +7,9 @@ import {
   upsertMoodEntry,
 } from "@/lib/db";
 import { getTodayDate } from "@/lib/utils";
-import Anthropic from "@anthropic-ai/sdk";
+import Groq from "groq-sdk";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -18,12 +18,10 @@ export async function GET(req: NextRequest) {
 
   const date = req.nextUrl.searchParams.get("date");
   if (date) {
-    // 🔔 UPDATE: Added 'await' because database call is asynchronous now
     const entry = await getMoodEntryForDate(session.user.id, date);
     return NextResponse.json({ entry: entry || null });
   }
 
-  // 🔔 UPDATE: Added 'await' because database call is asynchronous now
   const entries = await getMoodEntriesForUser(session.user.id, 30);
   return NextResponse.json({ entries });
 }
@@ -33,33 +31,44 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
-  const { moodEmoji, moodLabel, moodScore, journal, phqScore, week } = body;
+  const body: {
+    moodEmoji: string;
+    moodLabel: string;
+    moodScore: number;
+    journal: string;
+    week: number;
+  } = await req.json();
+  const { moodEmoji, moodLabel, moodScore, week } = body;
+  let journal = body.journal;
   const date = getTodayDate();
 
   let aiFeedback = "";
 
   try {
-    const parts = [];
+    const parts: string[] = [];
     if (moodLabel) parts.push(`mood: ${moodLabel} (${moodEmoji})`);
-    if (journal) parts.push(`journal: "${journal}"`);
-    if (phqScore !== undefined) parts.push(`PHQ-5 score: ${phqScore}/20`);
+    if (journal) {
+      parts.push(`journal: "${journal}"`);
+    } else {
+      journal = "nothing added";
+    }
+    // if (phqScore !== undefined) parts.push(`PHQ-5 score: ${phqScore}/20`);
 
     if (parts.length > 0) {
       const prompt = `You are a compassionate maternal mental health support AI. A pregnant woman at week ${
         week || "unknown"
-      } has logged:
-${parts.join(", ")}.
+      } has logged: ${parts.join(", ")}.
 
 Provide warm, supportive feedback in 2-3 sentences. Be empathetic and encouraging. If PHQ score is high (>9), gently suggest professional support. Keep it under 60 words.`;
 
-      const message = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022", // Updated to a valid Sonnet identifier
+      const response = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
         max_tokens: 150,
+        temperature: 0.7,
         messages: [{ role: "user", content: prompt }],
       });
 
-      aiFeedback = (message.content[0] as any).text;
+      aiFeedback = response.choices[0]?.message?.content?.trim() || "";
     }
   } catch (error) {
     console.error("Mood AI feedback generation failed:", error);
@@ -72,18 +81,17 @@ Provide warm, supportive feedback in 2-3 sentences. Be empathetic and encouragin
     };
     aiFeedback =
       moodScore !== undefined
-        ? tips[moodScore] ||
+        ? tips[moodScore] ??
           "You are doing great. Keep tracking your mood daily."
         : "Thank you for logging your mood today.";
   }
 
-  // 🔔 UPDATE: Added 'await' to ensure the record safely saves to Neon before replying
   await upsertMoodEntry(session.user.id, date, {
     moodEmoji,
     moodLabel,
     moodScore,
     journal,
-    phqScore: phqScore !== undefined ? phqScore : undefined,
+    // phqScore: phqScore !== undefined ? phqScore : undefined,
     aiFeedback,
   });
 

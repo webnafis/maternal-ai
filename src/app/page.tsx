@@ -245,7 +245,7 @@ export default function OnboardingPage() {
           <strong style={{ color: "var(--text-dark)" }}>
             🔒 Your privacy matters.
           </strong>{" "}
-          All data is stored locally and linked to your name. Returning users
+          All data is stored securely and linked to your name. Returning users
           are automatically logged in.
         </div>
       </div>

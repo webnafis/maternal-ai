@@ -1,5 +1,10 @@
 import { format, differenceInDays, addWeeks } from "date-fns";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 export function getTrimester(week: number): "1st" | "2nd" | "3rd" {
   if (week <= 13) return "1st";
   if (week <= 26) return "2nd";

@@ -6,6 +6,10 @@ import { SYMPTOMS } from "@/lib/utils";
 export default function SymptomsPage() {
   const { data: session } = useSession();
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [cachedResult, setCachedResult] = useState<{
+    severity: string;
+    analysis: string;
+  } | null>(null);
   const [result, setResult] = useState<{
     severity: string;
     analysis: string;
@@ -13,17 +17,20 @@ export default function SymptomsPage() {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(true); // 👈 add this
 
   useEffect(() => {
     fetchRecentLogs();
   }, []);
 
   const fetchRecentLogs = async () => {
+    setLogsLoading(true); // 👈 add this
     const res = await fetch("/api/symptoms");
     if (res.ok) {
       const data = await res.json();
       setRecentLogs(data.logs?.slice(0, 5) || []);
     }
+    setLogsLoading(false); // 👈 add this
   };
 
   const toggleSymptom = (i: number) => {
@@ -37,22 +44,42 @@ export default function SymptomsPage() {
   const analyzeSymptoms = async (save = false) => {
     setLoading(true);
     setSaved(false);
+
     const selectedSymptoms = Array.from(selected).map((i) => SYMPTOMS[i].label);
     const week = (session?.user as any)?.pregnancyWeek || 20;
 
+    // If saving, reuse the already-generated result — no re-generation
+    if (save && cachedResult) {
+      const res = await fetch("/api/symptoms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symptoms: selectedSymptoms,
+          week,
+          save: true,
+          cachedSeverity: cachedResult.severity,
+          cachedAnalysis: cachedResult.analysis,
+        }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        fetchRecentLogs();
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Fresh analysis — generate AI result
     const res = await fetch("/api/symptoms", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ symptoms: selectedSymptoms, week, save }),
+      body: JSON.stringify({ symptoms: selectedSymptoms, week, save: false }),
     });
 
     if (res.ok) {
       const data = await res.json();
       setResult(data);
-      if (save) {
-        setSaved(true);
-        fetchRecentLogs();
-      }
+      setCachedResult(data); // cache for potential save
     }
     setLoading(false);
   };
@@ -60,6 +87,7 @@ export default function SymptomsPage() {
   const clearAll = () => {
     setSelected(new Set());
     setResult(null);
+    setCachedResult(null);
     setSaved(false);
   };
 
@@ -122,9 +150,7 @@ export default function SymptomsPage() {
             {SYMPTOMS.map((s, i) => (
               <button
                 key={i}
-                className={`symptom-btn ${
-                  s.level === "danger" ? "danger" : ""
-                } ${selected.has(i) ? "selected" : ""}`}
+                className={`symptom-btn  ${selected.has(i) ? "selected" : ""}`}
                 onClick={() => toggleSymptom(i)}
               >
                 <span
@@ -149,9 +175,9 @@ export default function SymptomsPage() {
               <button
                 className="btn-sage"
                 onClick={() => analyzeSymptoms(true)}
-                disabled={loading}
+                disabled={loading} // ✅ already there — good
               >
-                💾 Save to Log
+                {loading ? "💾 Saving…" : "💾 Save to Log"} {/* add this */}
               </button>
             )}
             <button className="btn-outline" onClick={clearAll}>
@@ -272,19 +298,71 @@ export default function SymptomsPage() {
           </div>
 
           {/* Recent logs */}
-          {recentLogs.length > 0 && (
-            <div className="JotnoAI-card">
-              <h3
-                style={{
-                  fontFamily: "'Playfair Display', serif",
-                  fontSize: 16,
-                  marginBottom: 12,
-                  color: "var(--text-dark)",
-                }}
-              >
-                📋 Recent Logs
-              </h3>
-              {recentLogs.map((log, i) => (
+          <div className="JotnoAI-card">
+            <h3
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 16,
+                marginBottom: 12,
+                color: "var(--text-dark)",
+              }}
+            >
+              📋 Recent Logs
+            </h3>
+
+            {logsLoading ? (
+              // Skeleton loader
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 10,
+                      background: "var(--cream)",
+                      border: "1px solid rgba(200,169,110,0.1)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: 12,
+                        width: "40%",
+                        borderRadius: 6,
+                        background: "rgba(200,169,110,0.15)",
+                        animation: "pulse 1.5s ease-in-out infinite",
+                      }}
+                    />
+                    <div
+                      style={{
+                        height: 10,
+                        width: "80%",
+                        borderRadius: 6,
+                        background: "rgba(200,169,110,0.1)",
+                        animation: "pulse 1.5s ease-in-out infinite",
+                      }}
+                    />
+                    <div
+                      style={{
+                        height: 18,
+                        width: "25%",
+                        borderRadius: 10,
+                        background: "rgba(200,169,110,0.1)",
+                        animation: "pulse 1.5s ease-in-out infinite",
+                      }}
+                    />
+                  </div>
+                ))}
+                <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+              </div>
+            ) : recentLogs.length === 0 ? (
+              <p style={{ fontSize: 13, color: "var(--text-light)" }}>
+                No symptom logs yet.
+              </p>
+            ) : (
+              recentLogs.map((log, i) => (
                 <div
                   key={i}
                   style={{
@@ -320,9 +398,9 @@ export default function SymptomsPage() {
                     {log.severity}
                   </span>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

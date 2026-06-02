@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { getTrimester, NUTRITION_DATA } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Nutrient {
   name: string;
@@ -17,38 +18,127 @@ interface NutritionPlan {
 }
 
 export default function NutritionPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession(); // 👈 add status
   const [week, setWeek] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    if (session?.user) {
-      const currentWeek = (session.user as any).pregnancyWeek || 1;
+    if (status === "authenticated") {
+      // 👈 wait for confirmed session
+      const currentWeek = (session?.user as any)?.pregnancyWeek || 1;
       setWeek(currentWeek);
       setLoading(false);
     }
-  }, [session]);
+  }, [status]);
 
   const trimester = getTrimester(week);
   const plan: NutritionPlan = NUTRITION_DATA[trimester];
 
-  if (loading) {
+  // Replace the existing if (loading) block
+  if (loading || status === "loading") {
     return (
-      <div
-        style={{
-          minHeight: "80vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div className="typing-dot" style={{ marginRight: 4 }}></div>
-        <div className="typing-dot" style={{ marginRight: 4 }}></div>
-        <div className="typing-dot"></div>
-        <p style={{ fontSize: 14, color: "var(--text-mid)", marginTop: 12 }}>
-          Customizing your nutritional guide...
-        </p>
+      <div style={{ padding: "24px", maxWidth: 1100, margin: "0 auto" }}>
+        {/* Header */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: 24,
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <div>
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-4 w-80" />
+          </div>
+          <Skeleton className="h-6 w-40 rounded-full" />
+        </div>
+
+        {/* Top grid — nutrients + supplements */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gap: 20,
+            marginBottom: 20,
+          }}
+        >
+          {/* Nutrient bars skeleton */}
+          <div className="JotnoAI-card">
+            <Skeleton className="h-5 w-72 mb-2" />
+            <Skeleton className="h-4 w-full mb-5" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                  <Skeleton className="h-2.5 w-full rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Supplements skeleton */}
+          <div className="JotnoAI-card">
+            <Skeleton className="h-5 w-56 mb-2" />
+            <Skeleton className="h-4 w-full mb-4" />
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 10,
+              }}
+            >
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom grid — safe + avoid foods */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gap: 20,
+          }}
+        >
+          {/* Safe foods skeleton */}
+          <div className="JotnoAI-card">
+            <Skeleton className="h-5 w-56 mb-2" />
+            <Skeleton className="h-4 w-full mb-4" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+
+          {/* Avoid foods skeleton */}
+          <div className="JotnoAI-card">
+            <Skeleton className="h-5 w-48 mb-2" />
+            <Skeleton className="h-4 w-full mb-4" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Hydration banner skeleton */}
+        <Skeleton className="h-16 w-full rounded-xl mt-6" />
       </div>
     );
   }
@@ -149,7 +239,7 @@ export default function NutritionPage() {
                     {nutrient.name}
                   </span>
                   <span style={{ color: "var(--text-mid)" }}>
-                    {nutrient.pct}% Recommended Target achieved
+                    {nutrient.pct}% Recommended
                   </span>
                 </div>
                 {/* Progress bar wrap container */}

@@ -34,7 +34,7 @@ const QUICK_PROMPTS = [
 ];
 
 export default function AIAssistantPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -131,7 +131,33 @@ export default function AIAssistantPage() {
       },
     ]);
   }
-
+  if (status === "loading") {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "60vh",
+          flexDirection: "column",
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "3px solid rgba(200,169,110,0.2)",
+            borderTop: "3px solid var(--rose)",
+            animation: "spin 0.8s linear infinite",
+          }}
+        />
+        <p style={{ fontSize: 14, color: "var(--text-light)" }}>Loading…</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
   function formatTime(iso?: string) {
     if (!iso) return "";
     return new Date(iso).toLocaleTimeString([], {

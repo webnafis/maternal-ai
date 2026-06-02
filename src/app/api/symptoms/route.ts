@@ -3,16 +3,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { saveSymptomLog, getSymptomLogsForUser } from "@/lib/db";
 import { getTodayDate } from "@/lib/utils";
-import Anthropic from "@anthropic-ai/sdk";
+import Groq from "groq-sdk";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // 🔔 UPDATE: Added 'await' since database queries are asynchronous now
   const logs = await getSymptomLogsForUser(session.user.id, 14);
   return NextResponse.json({ logs });
 }
@@ -22,12 +21,42 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { symptoms, week, save } = await req.json();
-
+  const { symptoms, week, save, cachedSeverity, cachedAnalysis } =
+    await req.json();
+  if (save && cachedSeverity && cachedAnalysis) {
+    const date = getTodayDate();
+    await saveSymptomLog(
+      session.user.id,
+      date,
+      symptoms,
+      cachedSeverity,
+      cachedAnalysis
+    );
+    return NextResponse.json({
+      severity: cachedSeverity,
+      analysis: cachedAnalysis,
+    });
+  }
   if (!symptoms || symptoms.length === 0) {
     return NextResponse.json({
       severity: "safe",
       analysis: "✅ No symptoms selected. Great — keep monitoring daily!",
+    });
+  }
+
+  // If saving and we already have the generated result, just persist it — no re-generation
+  if (save && cachedSeverity && cachedAnalysis) {
+    const date = getTodayDate();
+    await saveSymptomLog(
+      session.user.id,
+      date,
+      symptoms,
+      cachedSeverity,
+      cachedAnalysis
+    );
+    return NextResponse.json({
+      severity: cachedSeverity,
+      analysis: cachedAnalysis,
     });
   }
 
@@ -46,16 +75,15 @@ export async function POST(req: NextRequest) {
     warning.some((w) => s.includes(w))
   );
 
-  let severity = hasDanger ? "danger" : hasWarn ? "warn" : "safe";
+  const severity = hasDanger ? "danger" : hasWarn ? "warn" : "safe";
   let aiAnalysis = "";
 
-  // Get AI analysis
   try {
     const prompt = `You are a maternal health AI assistant. A pregnant woman at week ${
       week || "unknown"
     } reports these symptoms: ${symptoms.join(", ")}.
 
-Provide a brief, empathetic 2-3 sentence assessment. Be medically accurate but compassionate. 
+Provide a brief, empathetic 2-3 sentence assessment. Be medically accurate but compassionate.
 ${
   hasDanger
     ? "This is URGENT - emphasize she should seek immediate medical attention."
@@ -64,15 +92,16 @@ ${
 ${hasWarn ? "These need medical evaluation soon." : ""}
 ${severity === "safe" ? "These are generally normal pregnancy symptoms." : ""}
 
-End with one actionable recommendation. Keep it under 80 words total.`;
+End with one actionable recommendation. Keep it under 100 words total.`;
 
-    const message = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022", // Updated to a valid Sonnet identifier
+    const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
       max_tokens: 200,
+      temperature: 0.6,
       messages: [{ role: "user", content: prompt }],
     });
 
-    aiAnalysis = (message.content[0] as any).text;
+    aiAnalysis = response.choices[0]?.message?.content?.trim() || "";
   } catch (error) {
     console.error("Symptom AI analysis generation failed:", error);
     aiAnalysis = hasDanger
@@ -82,11 +111,6 @@ End with one actionable recommendation. Keep it under 80 words total.`;
       : "✅ These symptoms are typically normal in pregnancy. Rest, stay hydrated, and mention them at your next check-up.";
   }
 
-  if (save) {
-    const date = getTodayDate();
-    // 🔔 UPDATE: Added 'await' to ensure the record safely saves to Neon before replying
-    await saveSymptomLog(session.user.id, date, symptoms, severity, aiAnalysis);
-  }
-
+  // analyze-only call — just return, don't save
   return NextResponse.json({ severity, analysis: aiAnalysis });
 }

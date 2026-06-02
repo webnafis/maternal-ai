@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Vaccine {
   id: string;
@@ -43,7 +44,7 @@ const STATUS = {
 } as const;
 
 export default function VaccinationPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -51,8 +52,11 @@ export default function VaccinationPage() {
   const [confirmUndoneId, setConfirmUndoneId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchVaccines();
-  }, [session]);
+    if (status === "authenticated") {
+      // 👈 only fetch when session is confirmed ready
+      fetchVaccines();
+    }
+  }, [status]);
 
   const fetchVaccines = async () => {
     setLoading(true);
@@ -90,6 +94,99 @@ export default function VaccinationPage() {
       setUpdatingId(null);
     }
   };
+
+  if (status === "loading" || loading) {
+    return (
+      <div style={{ padding: "24px", maxWidth: 1100, margin: "0 auto" }}>
+        {/* Header */}
+        <div style={{ marginBottom: 28 }}>
+          <Skeleton className="h-8 w-72 mb-2" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+
+        {/* Overview cards */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: 16,
+            marginBottom: 32,
+          }}
+        >
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="JotnoAI-card"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                padding: "20px",
+              }}
+            >
+              <Skeleton className="h-14 w-14 rounded-2xl" />
+              <div>
+                <Skeleton className="h-6 w-16 mb-2" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Main split */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gap: 24,
+            alignItems: "start",
+          }}
+        >
+          {/* Left: vaccine list */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
+                  padding: "16px 20px",
+                  background: "var(--warm-white)",
+                  borderRadius: 16,
+                  boxShadow: "var(--shadow)",
+                  border: "1px solid rgba(200,169,110,0.08)",
+                }}
+              >
+                <Skeleton className="h-11 w-11 rounded-full flex-shrink-0" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-4 w-16 rounded-full" />
+                  </div>
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-8 w-24 rounded-xl" />
+              </div>
+            ))}
+          </div>
+
+          {/* Right: timeline */}
+          <div className="JotnoAI-card" style={{ padding: "24px" }}>
+            <Skeleton className="h-5 w-56 mb-4" />
+            <Skeleton className="h-4 w-full mb-1" />
+            <Skeleton className="h-4 w-full mb-1" />
+            <Skeleton className="h-4 w-3/4 mb-4" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-14 w-full rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Confirmed: mark a done vaccine as undone (API recalculates due/upcoming on next GET)
   const confirmMarkUndone = async () => {
@@ -280,18 +377,19 @@ export default function VaccinationPage() {
       >
         {/* Left: Vaccine Tracking List */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {loading ? (
-            <div
-              style={{
-                padding: "40px 0",
-                textAlign: "center",
-                color: "var(--text-light)",
-                fontSize: 14,
-              }}
-            >
-              Loading vaccination records...
-            </div>
-          ) : (
+          {
+            // loading ? (
+            //   <div
+            //     style={{
+            //       padding: "40px 0",
+            //       textAlign: "center",
+            //       color: "var(--text-light)",
+            //       fontSize: 14,
+            //     }}
+            //   >
+            //     Loading vaccination records...
+            //   </div>
+            // ) :
             vaccines.map((v) => {
               const s = STATUS[v.status];
               return (
@@ -419,7 +517,7 @@ export default function VaccinationPage() {
                 </div>
               );
             })
-          )}
+          }
         </div>
 
         {/* Right: Clinical Timeline — all vaccines with description + status color */}
@@ -447,11 +545,13 @@ export default function VaccinationPage() {
               antibodies directly across the placenta structure to support
               newborn shielding lines prior to birth.
             </p>
-            {loading ? (
-              <div style={{ fontSize: 13, color: "var(--text-light)" }}>
-                Loading timeline...
-              </div>
-            ) : (
+            {
+              // loading ? (
+              //   <div style={{ fontSize: 13, color: "var(--text-light)" }}>
+              //     Loading timeline...
+              //   </div>
+              // ) :
+
               <div
                 style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
@@ -509,7 +609,7 @@ export default function VaccinationPage() {
                   );
                 })}
               </div>
-            )}
+            }
           </div>
         </div>
       </div>
