@@ -8,13 +8,47 @@ interface Vaccine {
   weekRange: string;
   eligibleFromWeek: number;
   status: "done" | "due" | "upcoming";
+  description: string;
 }
+
+// ── Status theme config ──────────────────────────────────────────────────────
+const STATUS = {
+  done: {
+    icon: "✅",
+    badgeClass: "badge-sage",
+    circleBg: "var(--sage-pale)",
+    circleColor: "var(--sage)",
+    timelineBg: "var(--sage-pale)",
+    timelineBorder: "var(--sage)",
+    label: "Completed",
+  },
+  due: {
+    icon: "⏰",
+    badgeClass: "badge-rose",
+    circleBg: "#FFF8E6",
+    circleColor: "var(--gold)",
+    timelineBg: "var(--rose-pale)",
+    timelineBorder: "var(--rose)",
+    label: "Due Now",
+  },
+  upcoming: {
+    icon: "⏳",
+    badgeClass: "badge-gold",
+    circleBg: "var(--cream)",
+    circleColor: "var(--text-light)",
+    timelineBg: "#F5F5F5",
+    timelineBorder: "#C8C8C8",
+    label: "Upcoming",
+  },
+} as const;
 
 export default function VaccinationPage() {
   const { data: session } = useSession();
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  // Stores the vaccine ID pending an "undo done" confirmation, or null
+  const [confirmUndoneId, setConfirmUndoneId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVaccines();
@@ -30,48 +64,70 @@ export default function VaccinationPage() {
         setVaccines(data.vaccines || []);
       }
     } catch (err) {
-      console.error("Error fetching vaccination lists:", err);
+      console.error("Error fetching vaccination list:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleStatus = async (id: string, currentStatus: string) => {
+  // Mark a due vaccine as done immediately
+  const markDone = async (id: string) => {
     setUpdatingId(id);
-    const newStatus = currentStatus === "done" ? "due" : "done";
-
     try {
       const res = await fetch("/api/vaccination", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vaccineId: id, status: newStatus }),
+        body: JSON.stringify({ vaccineId: id, status: "done" }),
       });
-
       if (res.ok) {
         setVaccines((prev) =>
-          prev.map((v) =>
-            v.id === id ? { ...v, status: newStatus as any } : v
-          )
+          prev.map((v) => (v.id === id ? { ...v, status: "done" } : v))
         );
       }
     } catch (err) {
-      console.error("Error updates to immunization row failed:", err);
+      console.error("Error marking vaccine done:", err);
     } finally {
       setUpdatingId(null);
     }
   };
 
-  // 📊 Dynamic Metric Counters for Overview Cards
+  // Confirmed: mark a done vaccine as undone (API recalculates due/upcoming on next GET)
+  const confirmMarkUndone = async () => {
+    if (!confirmUndoneId) return;
+    const id = confirmUndoneId;
+    setConfirmUndoneId(null);
+    setUpdatingId(id);
+    try {
+      const res = await fetch("/api/vaccination", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Send "due" — the GET endpoint will recalculate to due/upcoming correctly
+        body: JSON.stringify({ vaccineId: id, status: "due" }),
+      });
+      if (res.ok) {
+        // Refresh to get server-recalculated status
+        await fetchVaccines();
+      }
+    } catch (err) {
+      console.error("Error marking vaccine undone:", err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const totalCount = vaccines.length;
   const completedCount = vaccines.filter((v) => v.status === "done").length;
   const pendingDueCount = vaccines.filter((v) => v.status === "due").length;
+  const upcomingCount = vaccines.filter((v) => v.status === "upcoming").length;
+
+  const confirmingVaccine = vaccines.find((v) => v.id === confirmUndoneId);
 
   return (
     <div
       style={{ padding: "24px", maxWidth: 1100, margin: "0 auto" }}
       className="animate-fade-in"
     >
-      {/* Page Title Header */}
+      {/* ── Page Title ── */}
       <div style={{ marginBottom: 28 }}>
         <h2
           style={{
@@ -85,15 +141,15 @@ export default function VaccinationPage() {
         </h2>
         <p style={{ fontSize: 14, color: "var(--text-mid)" }}>
           Track critical pregnancy vaccines recommended for your gestational
-          week timeline context.
+          week timeline.
         </p>
       </div>
 
-      {/* 🌟 Overview Cards Row (Matches HTML Design Blocks) */}
+      {/* ── Overview Cards ── */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
           gap: 16,
           marginBottom: 32,
         }}
@@ -169,13 +225,51 @@ export default function VaccinationPage() {
             <div
               style={{ fontSize: 12, color: "var(--text-light)", marginTop: 2 }}
             >
-              Pending Doses Due
+              Pending Due
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="JotnoAI-card"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 28,
+              background: "var(--cream)",
+              padding: "12px",
+              borderRadius: "14px",
+            }}
+          >
+            ⏳
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: "var(--text-dark)",
+                lineHeight: 1.2,
+              }}
+            >
+              {upcomingCount}
+            </div>
+            <div
+              style={{ fontSize: 12, color: "var(--text-light)", marginTop: 2 }}
+            >
+              Upcoming
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Split Interface Area */}
+      {/* ── Main Split Layout ── */}
       <div
         style={{
           display: "grid",
@@ -184,7 +278,7 @@ export default function VaccinationPage() {
           alignItems: "start",
         }}
       >
-        {/* Left Side: Modernized Dynamic Vaccine Card Layout */}
+        {/* Left: Vaccine Tracking List */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {loading ? (
             <div
@@ -195,25 +289,11 @@ export default function VaccinationPage() {
                 fontSize: 14,
               }}
             >
-              Loading vaccination record matrix...
+              Loading vaccination records...
             </div>
           ) : (
             vaccines.map((v) => {
-              const isDone = v.status === "done";
-              const isDue = v.status === "due";
-
-              const circleBg = isDone
-                ? "var(--sage-pale)"
-                : isDue
-                ? "#FFF8E6"
-                : "var(--cream)";
-              const circleColor = isDone
-                ? "var(--sage)"
-                : isDue
-                ? "var(--gold)"
-                : "var(--text-light)";
-              const checkIcon = isDone ? "✅" : isDue ? "⏰" : "⏳";
-
+              const s = STATUS[v.status];
               return (
                 <div
                   className="vacc-item animate-fade-in"
@@ -232,12 +312,11 @@ export default function VaccinationPage() {
                     transition: "transform 0.2s ease",
                   }}
                 >
-                  {/* Status Icon Indicator */}
+                  {/* Status icon */}
                   <div
-                    className="vacc-status-circle"
                     style={{
-                      background: circleBg,
-                      color: circleColor,
+                      background: s.circleBg,
+                      color: s.circleColor,
                       width: 44,
                       height: 44,
                       borderRadius: "50%",
@@ -248,10 +327,10 @@ export default function VaccinationPage() {
                       flexShrink: 0,
                     }}
                   >
-                    {checkIcon}
+                    {s.icon}
                   </div>
 
-                  {/* Core Details */}
+                  {/* Name + badge + week */}
                   <div style={{ flex: 1 }}>
                     <div
                       style={{
@@ -271,13 +350,7 @@ export default function VaccinationPage() {
                         {v.name}
                       </span>
                       <span
-                        className={`JotnoAI-badge ${
-                          isDone
-                            ? "badge-sage"
-                            : isDue
-                            ? "badge-gold"
-                            : "badge-rose"
-                        }`}
+                        className={`JotnoAI-badge ${s.badgeClass}`}
                         style={{ fontSize: 10, textTransform: "capitalize" }}
                       >
                         {v.status}
@@ -297,35 +370,66 @@ export default function VaccinationPage() {
                     </p>
                   </div>
 
-                  {/* Operational Action Button */}
-                  <button
-                    className={isDone ? "btn-sage" : "btn-primary"}
-                    style={{
-                      padding: "8px 14px",
-                      fontSize: 12,
-                      borderRadius: "10px",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                    }}
-                    onClick={() => toggleStatus(v.id, v.status)}
-                    disabled={updatingId !== null}
-                  >
-                    {isDone ? "Mark Undone" : "Mark Done"}
-                  </button>
+                  {/* Action button — upcoming is locked */}
+                  {v.status === "upcoming" ? (
+                    <span
+                      style={{
+                        padding: "8px 14px",
+                        fontSize: 12,
+                        borderRadius: "10px",
+                        background: "#F0F0F0",
+                        color: "var(--text-light)",
+                        whiteSpace: "nowrap",
+                        userSelect: "none",
+                      }}
+                    >
+                      Not Yet Due
+                    </span>
+                  ) : v.status === "due" ? (
+                    <button
+                      className="btn-primary"
+                      style={{
+                        padding: "8px 14px",
+                        fontSize: 12,
+                        borderRadius: "10px",
+                        cursor: updatingId ? "not-allowed" : "pointer",
+                        whiteSpace: "nowrap",
+                      }}
+                      onClick={() => markDone(v.id)}
+                      disabled={updatingId !== null}
+                    >
+                      Mark Done
+                    </button>
+                  ) : (
+                    <button
+                      className="btn-sage"
+                      style={{
+                        padding: "8px 14px",
+                        fontSize: 12,
+                        borderRadius: "10px",
+                        cursor: updatingId ? "not-allowed" : "pointer",
+                        whiteSpace: "nowrap",
+                      }}
+                      onClick={() => setConfirmUndoneId(v.id)}
+                      disabled={updatingId !== null}
+                    >
+                      Mark Undone
+                    </button>
+                  )}
                 </div>
               );
             })
           )}
         </div>
 
-        {/* Right Side: Clinical Timeline Guide Card Block */}
+        {/* Right: Clinical Timeline — all vaccines with description + status color */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="JotnoAI-card" style={{ padding: "24px" }}>
             <h3
               style={{
                 fontFamily: "'Playfair Display', serif",
                 fontSize: 18,
-                marginBottom: 12,
+                marginBottom: 16,
                 color: "var(--text-dark)",
               }}
             >
@@ -343,44 +447,160 @@ export default function VaccinationPage() {
               antibodies directly across the placenta structure to support
               newborn shielding lines prior to birth.
             </p>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-                fontSize: 13,
-              }}
-            >
-              <div
-                style={{
-                  padding: "12px",
-                  background: "var(--rose-pale)",
-                  borderRadius: 12,
-                  borderLeft: "4px solid var(--rose)",
-                  lineHeight: 1.4,
-                }}
-              >
-                <strong>Tetanus Toxoid (TT):</strong> Essential prevention
-                tracking blocking neonatal maternal tetanus. Generally
-                structured across two core sequential distribution windows.
+            {loading ? (
+              <div style={{ fontSize: 13, color: "var(--text-light)" }}>
+                Loading timeline...
               </div>
+            ) : (
               <div
-                style={{
-                  padding: "12px",
-                  background: "var(--sage-pale)",
-                  borderRadius: 12,
-                  borderLeft: "4px solid var(--sage)",
-                  lineHeight: 1.4,
-                }}
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
-                <strong>Influenza Shield:</strong> Safe across all gestational
-                windows. Protects prospective mothers from severe respiratory
-                illness contexts.
+                {vaccines.map((v) => {
+                  const s = STATUS[v.status];
+                  return (
+                    <div
+                      key={v.id}
+                      style={{
+                        padding: "12px 14px",
+                        background: s.timelineBg,
+                        borderRadius: 12,
+                        borderLeft: `4px solid ${s.timelineBorder}`,
+                        lineHeight: 1.5,
+                        fontSize: 13,
+                      }}
+                    >
+                      {/* <div
+                      // style={{
+                      //   padding: "12px",
+                      //   background: "var(--rose-pale)",
+                      //   borderRadius: 12,
+                      //   borderLeft: "4px solid var(--rose)",
+                      //   lineHeight: 1.4,
+                      //   // marginBottom: 4,
+                      // }}
+                      > */}
+                      <strong>{`${s.icon} ${v.name}: `}</strong>
+
+                      {v.description}
+                      {/* <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 600,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.04em",
+                            color: s.timelineBorder,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {s.label}
+                        </span> */}
+                      {/* </div> */}
+                      {/* <p
+                        style={{
+                          margin: "0 0 4px 0",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: "var(--text-mid)",
+                        }}
+                      >
+                        📅 {v.weekRange}
+                      </p> */}
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* ── Confirmation Modal: Mark Undone ── */}
+      {confirmUndoneId && confirmingVaccine && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "16px",
+          }}
+          onClick={() => setConfirmUndoneId(null)}
+        >
+          <div
+            style={{
+              background: "var(--warm-white)",
+              borderRadius: 20,
+              padding: "28px 28px 24px",
+              maxWidth: 380,
+              width: "100%",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.18)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{ fontSize: 36, marginBottom: 12, textAlign: "center" }}
+            >
+              ↩️
+            </div>
+            <h4
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 18,
+                textAlign: "center",
+                marginBottom: 8,
+                color: "var(--text-dark)",
+              }}
+            >
+              Remove Completion?
+            </h4>
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--text-mid)",
+                lineHeight: 1.6,
+                textAlign: "center",
+                marginBottom: 22,
+              }}
+            >
+              Mark{" "}
+              <strong style={{ color: "var(--text-dark)" }}>
+                {confirmingVaccine.name}
+              </strong>{" "}
+              as not done? The status will revert based on your current
+              pregnancy week.
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                className="btn-outline"
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                }}
+                onClick={() => setConfirmUndoneId(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                }}
+                onClick={confirmMarkUndone}
+              >
+                Yes, Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

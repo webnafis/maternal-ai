@@ -42,6 +42,9 @@ export async function GET() {
   const dueVaccines = VACCINES.filter((v) => vaccMap.get(v.id) === "due").map(
     (v) => v.name
   );
+  const upcomingVaccines = VACCINES.filter(
+    (v) => vaccMap.get(v.id) === "upcoming"
+  ).map((v) => v.name);
 
   const generatedAt = new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -105,6 +108,7 @@ ${symptomContextLines}
 
 Vaccinations Completed: ${doneVaccines.join(", ") || "None"}
 Vaccinations Due: ${dueVaccines.join(", ") || "None"}
+Vaccinations Upcoming: ${upcomingVaccines.join(", ") || "None"}
 `;
 
     const response = await groq.chat.completions.create({
@@ -141,6 +145,10 @@ Keep the total response under 350 words.`,
         ? `4. Schedule overdue vaccinations without delay: ${dueVaccines.join(
             ", "
           )}.`
+        : upcomingVaccines.length > 0
+        ? `4. Prepare for upcoming vaccinations: ${upcomingVaccines.join(
+            ", "
+          )}.`
         : "4. Review hydration, rest patterns, and nutritional intake for third-trimester readiness.",
     ].join("\n");
   }
@@ -152,8 +160,9 @@ Keep the total response under 350 words.`,
     dueDate: user.due_date || "Not set",
     vaccinations:
       [
-        ...doneVaccines.map((v) => `✅ ${v}`),
+        ...doneVaccines.map((v) => `✅ ${v} (Completed)`),
         ...dueVaccines.map((v) => `⏰ ${v} (Due)`),
+        ...upcomingVaccines.map((v) => `🔜 ${v} (Upcoming)`),
       ].join(", ") || "No records",
     // Structured arrays for rich UI rendering
     moodLog,
