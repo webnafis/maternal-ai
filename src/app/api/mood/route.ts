@@ -81,7 +81,7 @@ Provide warm, supportive feedback in 2-3 sentences. Be empathetic and encouragin
 
       const response = await groq.chat.completions.create({
         model: "llama-3.3-70b-versatile",
-        max_tokens: 150,
+        max_tokens: 1000,
         temperature: 0.7,
         messages: [{ role: "user", content: prompt }],
       });

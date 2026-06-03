@@ -6,7 +6,7 @@ import { format, addWeeks } from "date-fns";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, password, language } = await req.json();
+    const { name, password, week, language } = await req.json();
     const trimmed = name?.trim();
 
     if (!trimmed || trimmed.length < 2) {
@@ -31,14 +31,14 @@ export async function POST(req: NextRequest) {
     }
 
     const lang = language === "bn" ? "bn" : "en";
-    const defaultWeek = 1;
-    const dueDate = format(addWeeks(new Date(), 40 - defaultWeek), "yyyy-MM-dd");
+    const pregnancyWeek = week && Number(week) >= 1 && Number(week) <= 40 ? Number(week) : 1;
+    const dueDate = format(addWeeks(new Date(), 40 - pregnancyWeek), "yyyy-MM-dd");
     const passwordHash = await hashPassword(String(password));
 
     const user = await createUser(
       uuidv4(),
       trimmed,
-      defaultWeek,
+      pregnancyWeek,
       dueDate,
       lang,
       passwordHash

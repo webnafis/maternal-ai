@@ -15,6 +15,7 @@ function SignupForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [week, setWeek] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -42,6 +43,7 @@ function SignupForm() {
       body: JSON.stringify({
         name: username.trim(),
         password,
+        week,
         language,
       }),
     });
@@ -100,6 +102,25 @@ function SignupForm() {
             placeholder={t("auth.usernamePlaceholder")}
             autoComplete="username"
           />
+        </div>
+        <div>
+          <label style={labelStyle}>
+            {language === "bn" ? "গর্ভাবস্থার সপ্তাহ" : "Pregnancy Week"}
+          </label>
+          <select
+            className="JotnoAI-input"
+            value={week}
+            onChange={(e) => setWeek(Number(e.target.value))}
+            style={{ cursor: "pointer" }}
+          >
+            {Array.from({ length: 40 }, (_, i) => i + 1).map((w) => (
+              <option key={w} value={w}>
+                {language === "bn"
+                  ? `সপ্তাহ ${w} / ৪০`
+                  : `Week ${w} of 40`}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label style={labelStyle}>{t("auth.password")}</label>

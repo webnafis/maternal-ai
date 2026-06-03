@@ -103,7 +103,7 @@ End with one actionable recommendation. Keep it under 100 words total.`;
 
     const response = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
-      max_tokens: 200,
+      max_tokens: 1000,
       temperature: 0.6,
       messages: [{ role: "user", content: prompt }],
     });

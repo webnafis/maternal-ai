@@ -71,7 +71,7 @@ export default function DoctorSummaryPage() {
 
   useEffect(() => {
     fetchSummary();
-  }, [fetchSummary]);
+  }, [fetchSummary, language]);
 
   const handlePrint = () => {
     window.print();

@@ -1,4 +1,10 @@
-import { format, differenceInDays, addWeeks } from "date-fns";
+import {
+  format,
+  differenceInDays,
+  differenceInWeeks,
+  addWeeks,
+  parseISO,
+} from "date-fns";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -28,6 +34,34 @@ export function getDueDate(week: number): string {
 export function getTodayDate(): string {
   return format(new Date(), "yyyy-MM-dd");
 }
+
+export function calculateWeekFromDueDate(
+  dueDateStr: string | null | undefined
+): number {
+  if (!dueDateStr) return 1;
+  try {
+    const dueDate = parseISO(dueDateStr);
+    const today = new Date();
+    const daysUntilDue = differenceInDays(dueDate, today);
+    const weeksPregnant = Math.round((280 - daysUntilDue) / 7);
+    return Math.max(1, Math.min(40, weeksPregnant));
+  } catch {
+    return 1;
+  }
+}
+
+// export function calculateWeekFromDueDate(dueDateStr: string | null | undefined): number {
+//   if (!dueDateStr) return 1;
+//   try {
+//     const dueDate = parseISO(dueDateStr);
+//     const today = new Date();
+//     const daysUntilDue = differenceInDays(dueDate, today);
+//     const weeksPregnant = Math.round((280 - daysUntilDue) / 7);
+//     return Math.max(1, Math.min(40, weeksPregnant));
+//   } catch {
+//     return 1;
+//   }
+// }
 
 export function getGreeting(): string {
   const hour = new Date().getHours();

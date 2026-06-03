@@ -1,8 +1,9 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { getUserByName, getUserById, updateUserLanguage } from "./db";
+import { getUserByName, getUserById, updateUserLanguage, updateUserWeek } from "./db";
 import { normalizeLanguage } from "@/lib/i18n/types";
 import { verifyPassword } from "./password";
+import { calculateWeekFromDueDate } from "@/lib/utils";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -66,6 +67,11 @@ export const authOptions: NextAuthOptions = {
       if (token?.id && session.user) {
         const freshUser = await getUserById(token.id as string);
         if (freshUser) {
+          const calculatedWeek = calculateWeekFromDueDate(freshUser.due_date);
+          if (calculatedWeek !== freshUser.pregnancy_week) {
+            await updateUserWeek(freshUser.id, calculatedWeek);
+            freshUser.pregnancy_week = calculatedWeek;
+          }
           session.user.id = freshUser.id;
           session.user.pregnancyWeek = freshUser.pregnancy_week;
           session.user.dueDate = freshUser.due_date;

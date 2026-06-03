@@ -10,9 +10,9 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export function getLanguageInstruction(lang: AppLanguage): string {
   if (lang === "bn") {
-    return `IMPORTANT: Write your entire response in Bengali (বাংলা). Use simple, warm, caring language suitable for pregnant women in Bangladesh. Keep medical terms understandable.`;
+    return `IMPORTANT: Write your ENTIRE response in Bengali (বাংলা) ONLY. Do NOT use any English words except medical abbreviations. Use simple, warm, caring language suitable for pregnant women in Bangladesh. Keep medical terms understandable. Every sentence must be in Bengali.`;
   }
-  return `IMPORTANT: Write your entire response in English. Use warm, caring language suitable for pregnant women.`;
+  return `IMPORTANT: Write your ENTIRE response in English ONLY. Do NOT use any Bengali words. Use warm, caring language suitable for pregnant women.`;
 }
 
 export function appendLanguageToPrompt(
@@ -32,7 +32,7 @@ export async function translateText(
   try {
     const response = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
-      max_tokens: 800,
+      max_tokens: 1000,
       temperature: 0.3,
       messages: [
         {
@@ -63,17 +63,23 @@ export async function resolveLocalizedAiText(
   if (map[targetLang]?.trim()) return map[targetLang]!.trim();
 
   const inferredSource =
-    sourceLang ||
-    (map.en && !map.bn ? "en" : map.bn && !map.en ? "bn" : "en");
+    sourceLang || (map.en && !map.bn ? "en" : map.bn && !map.en ? "bn" : "en");
   if (inferredSource === targetLang) {
     return primaryText.trim();
   }
 
   const sourceText = map[inferredSource]?.trim() || primaryText.trim();
   const translated = await translateText(sourceText, targetLang);
-  const updated: I18nMap = { ...map, [inferredSource]: sourceText, [targetLang]: translated };
+  const updated: I18nMap = {
+    ...map,
+    [inferredSource]: sourceText,
+    [targetLang]: translated,
+  };
   if (onPersist) {
-    await onPersist(serializeI18nMap(updated), inferredSource === targetLang ? translated : primaryText);
+    await onPersist(
+      serializeI18nMap(updated),
+      inferredSource === targetLang ? translated : primaryText
+    );
   }
   return translated;
 }

@@ -20,12 +20,12 @@ export async function GET() {
   if (!session?.user?.id)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Fetch user profile first to ensure they exist before executing other database requests
   const user = await getUserById(session.user.id);
   if (!user)
     return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  // Run all secondary asynchronous database queries in parallel for optimal speed
+  const language = normalizeLanguage(user.language);
+
   const [moodEntries, symptomLogs, vaccRecords] = await Promise.all([
     getMoodEntriesForUser(session.user.id, 7),
     getSymptomLogsForUser(session.user.id, 7),
@@ -33,7 +33,6 @@ export async function GET() {
   ]);
 
   const week = user.pregnancy_week;
-  const language = normalizeLanguage(user.language);
   const vaccines = getLocalizedVaccines(language);
   const trimester = getTrimester(week);
   const progress = getProgress(week);
@@ -41,10 +40,8 @@ export async function GET() {
 
   const vaccMap = new Map(vaccRecords.map((r) => [r.vaccine_id, r.status]));
 
-  // Helper: calculate status from week if not in DB
   const getVaccineStatus = (vaccineId: string, eligibleFromWeek: number) => {
     if (vaccMap.has(vaccineId)) return vaccMap.get(vaccineId) as string;
-    // Not in DB — calculate based on current week
     if (week >= eligibleFromWeek) return "due";
     return "upcoming";
   };
@@ -64,17 +61,14 @@ export async function GET() {
   const generatedAt = new Date().toLocaleDateString(
     language === "bn" ? "bn-BD" : "en-GB",
     {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }
   );
 
-  // --- Build structured data for UI ---
-
-  // Full 7-day mood log for UI
   const moodLog = moodEntries.map((m) => ({
     date: m.date,
     emoji: m.mood_emoji,
@@ -82,14 +76,10 @@ export async function GET() {
     score: m.mood_score,
   }));
 
-  // Full symptom log with date + severity for UI
   const symptomLog = symptomLogs.map((s) => ({
     date: s.date,
     symptoms: s.symptoms as string[],
-    // severity: s.severity as "safe" | "warn" | "danger",
   }));
-
-  // --- Build rich AI context strings ---
 
   const moodContextLines =
     moodEntries.length > 0
@@ -110,7 +100,6 @@ export async function GET() {
           .join("\n")
       : "  No symptoms reported in the past 7 days.";
 
-  // Generate AI recommendations via Groq
   let aiRecommendations = "";
   try {
     const context = `
@@ -135,12 +124,13 @@ Provide exactly 3-4 numbered, specific, and actionable clinical recommendations 
 Analyze mood trends across all days, symptom patterns and severity, vaccination status, and gestational stage.
 Use clinical language appropriate for a physician's pre-visit review.
 Format as a plain numbered list (1. 2. 3. 4.) — do not use markdown headers, bullet dashes, or special characters.
-Keep the total response under 350 words.`;
+Keep the total response under 350 words.
+CRITICAL: You MUST complete every recommendation fully. Do NOT truncate or cut off mid-sentence. Every numbered item must be a complete, well-formed sentence or paragraph.`;
 
     const response = await groq.chat.completions.create({
       model: "llama-3.3-70b-versatile",
-      max_tokens: 450,
-      temperature: 0.6,
+      max_tokens: 1000,
+      temperature: 0.4,
       messages: [
         {
           role: "system",
