@@ -1,6 +1,11 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { getUserByName, getUserById, updateUserLanguage, updateUserWeek } from "./db";
+import {
+  getUserByName,
+  getUserById,
+  updateUserLanguage,
+  updateUserWeek,
+} from "./db";
 import { normalizeLanguage } from "@/lib/i18n/types";
 import { verifyPassword } from "./password";
 import { calculateWeekFromDueDate } from "@/lib/utils";
@@ -75,8 +80,7 @@ export const authOptions: NextAuthOptions = {
           session.user.id = freshUser.id;
           session.user.pregnancyWeek = freshUser.pregnancy_week;
           session.user.dueDate = freshUser.due_date;
-          session.user.language =
-            freshUser.language === "bn" ? "bn" : "en";
+          session.user.language = freshUser.language === "bn" ? "bn" : "en";
         }
       }
       return session;
@@ -87,4 +91,15 @@ export const authOptions: NextAuthOptions = {
     error: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token-v2`, // Upgrading the version clears old corrupt cookies instantly
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
 };
